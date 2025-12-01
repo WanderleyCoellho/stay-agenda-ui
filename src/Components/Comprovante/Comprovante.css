@@ -1,0 +1,146 @@
+/* Estilo Base */
+.comprovante-container {
+    width: 100%;
+    max-width: 350px;
+    padding: 15px;
+    font-family: 'Courier New', Courier, monospace;
+    background: #fff;
+    color: #000;
+    border: 1px solid #ddd;
+}
+
+/* --- CABEÇALHO (Mantido Centralizado) --- */
+.header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+.logo-img {
+    height: 50px;
+    object-fit: contain;
+    margin-bottom: 5px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.logo-area { font-size: 2rem; margin-bottom: 5px; text-align: center; }
+
+.header h2 { 
+    margin: 5px 0; 
+    font-size: 1.1rem; 
+    text-transform: uppercase; 
+    font-weight: 800;
+}
+.header p { 
+    margin: 0; 
+    font-size: 0.8rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    border-bottom: 1px solid #000;
+    padding-bottom: 10px;
+}
+
+/* --- CONTEÚDO (ALTERADO PARA ESQUERDA) --- */
+.section {
+    display: flex;
+    justify-content: flex-start; /* <--- MUDOU: Alinha tudo à esquerda */
+    align-items: baseline;       /* Alinha o texto na mesma base */
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+.section label { 
+    font-weight: bold; 
+    margin-right: 5px; /* Espaço pequeno entre o rótulo e o valor */
+    white-space: nowrap; /* Impede que o rótulo quebre linha */
+}
+.section span { 
+    text-align: left; /* <--- MUDOU: Texto do valor à esquerda */
+    max-width: 100%; 
+}
+
+.section.obs { 
+    display: block; 
+    font-style: italic; 
+    color: #333; 
+    margin-top: 8px; 
+    border: 1px dashed #999;
+    padding: 5px;
+    font-size: 0.8rem;
+    text-align: left; /* Garante alinhamento à esquerda */
+}
+
+.divider {
+    border-top: 1px dashed #000;
+    margin: 10px 0;
+}
+
+/* --- CAIXA FINANCEIRA (MANTIDO: ESQUERDA/DIREITA) --- */
+.financial-box {
+    margin-top: 10px;
+    padding: 8px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    background-color: #fdfdfd; 
+}
+
+.financial-box .row {
+    display: flex;
+    justify-content: space-between; /* Mantém valores nas extremidades */
+    margin-bottom: 3px;
+    font-size: 0.9rem;
+}
+
+.financial-box .total {
+    font-weight: 900;
+    font-size: 1rem;
+    margin-top: 5px;
+    border-top: 1px solid #000;
+    padding-top: 5px;
+}
+
+/* --- RODAPÉ --- */
+.footer {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.7rem;
+    color: #555;
+}
+
+/* =========================================
+   REGRAS DE IMPRESSÃO
+   ========================================= */
+@media print {
+    @page {
+        size: auto; 
+        margin: 10mm;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+    
+    .comprovante-container, .comprovante-container * {
+        visibility: visible;
+    }
+
+    .comprovante-container {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 20px;
+        margin: auto;
+        
+        width: 350px;
+        max-width: 100%;
+        
+        border: 1px solid #000;
+        padding: 15px;
+        box-shadow: none;
+    }
+
+    .financial-box {
+        border: 1px solid #000;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

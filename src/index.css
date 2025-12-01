@@ -1,0 +1,404 @@
+:root {
+  /* --- PALETA DE CORES (AESTHETIC THEME) --- */
+  --primary-color: #6f42c1;
+  /* Roxo Elegante */
+  --primary-hover: #59359a;
+  --secondary-color: #20c997;
+  /* Verde Água */
+  --accent-color: #fd7e14;
+  /* Laranja */
+
+  --bg-color: #f4f6f9;
+  /* Fundo Cinza Claro */
+  --text-dark: #343a40;
+
+  --shadow-sm: 0 .125rem .25rem rgba(0, 0, 0, .075);
+  --shadow-md: 0 .5rem 1rem rgba(0, 0, 0, .15);
+  --border-radius: 12px;
+}
+
+body {
+  background-color: var(--bg-color);
+  /* Fundo geométrico sutil */
+  background-image: radial-gradient(#e2e2e2 1px, transparent 1px);
+  background-size: 20px 20px;
+
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  color: var(--text-dark);
+  margin: 0;
+  padding: 0;
+  /* Evita rolagem horizontal indesejada no celular */
+  overflow-x: hidden;
+}
+
+/* --- ESTILIZAÇÃO DOS CARDS --- */
+.card {
+  border: none !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-header {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border-top-left-radius: var(--border-radius) !important;
+  border-top-right-radius: var(--border-radius) !important;
+  font-weight: 600;
+}
+
+/* --- BOTÕES --- */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+.btn {
+  border-radius: 8px !important;
+}
+
+/* --- FORMULÁRIOS --- */
+.form-control,
+.form-select {
+  border-radius: 8px !important;
+  padding: 10px;
+  border: 1px solid #ced4da;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25) !important;
+}
+
+/* --- TELA DE LOGIN --- */
+.login-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==============================================
+   📱 PARTE NOVA: RESPONSIVIDADE (MOBILE)
+   ============================================== */
+
+/* 1. Correção para iPhone (iOS) */
+/* O iPhone dá zoom sozinho se a letra for menor que 16px. Isso evita esse zoom chato. */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+/* 2. Tabelas com Rolagem (Scroll) */
+/* Se a tabela for larga demais para o celular, ela ganha uma barra de rolagem só nela, sem quebrar o site. */
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Deixa o deslize suave no celular */
+}
+
+/* 3. Regras Específicas para Telas Pequenas (Celular) */
+@media (max-width: 768px) {
+
+  /* Ajusta as margens laterais para não colar na borda da tela */
+  .container,
+  .container-fluid {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+
+  /* Diminui o tamanho dos títulos para caber melhor */
+  h1,
+  h2 {
+    font-size: 1.8rem !important;
+  }
+
+  h3 {
+    font-size: 1.5rem !important;
+  }
+
+  /* AJUSTE DO CALENDÁRIO NO CELULAR */
+  @media (max-width: 768px) {
+
+    /* Diminui a fonte do calendário */
+    .fc {
+      font-size: 0.85rem;
+    }
+
+    /* Esconde os botões de Mês/Semana no celular, forçando o usuário a focar no dia ou lista */
+    .fc-toolbar-chunk:nth-child(3) {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Ajusta a altura dos eventos para não ficarem esmagados */
+    .fc-event {
+      min-height: 25px;
+    }
+  }
+
+  /* ... (seu código anterior) ... */
+
+  /* =========================================
+   TRANSFORMAÇÃO MOBILE: TABELA -> CARDS
+   ========================================= */
+  @media (max-width: 768px) {
+
+    /* A classe .mobile-table ativa esse comportamento */
+
+    /* 1. Esconde o cabeçalho da tabela (Data, Hora, etc) */
+    .mobile-table thead {
+      display: none;
+    }
+
+    /* 2. Transforma cada LINHA (tr) em um CARTÃO */
+    .mobile-table tbody tr {
+      display: block;
+      margin-bottom: 20px;
+      /* Espaço entre cards */
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      /* Sombra suave */
+      border: 1px solid #eee;
+      padding: 15px;
+    }
+
+    /* 3. Transforma cada CÉLULA (td) em uma linha flexível */
+    .mobile-table tbody td {
+      display: flex;
+      justify-content: space-between;
+      /* Rótulo na esq, Valor na dir */
+      align-items: center;
+      padding: 10px 0;
+      border: none;
+      border-bottom: 1px solid #f5f5f5;
+      /* Linha divisória sutil */
+      text-align: right;
+    }
+
+    /* 4. O último item (Ações) ganha destaque especial */
+    .mobile-table tbody td:last-child {
+      border-bottom: none;
+      display: flex;
+      justify-content: flex-end;
+      /* Botões à direita */
+      gap: 10px;
+      padding-top: 15px;
+      margin-top: 5px;
+    }
+
+    /* 5. O TRUQUE: Adiciona o rótulo (ex: "Cliente:") antes do valor usando CSS */
+    .mobile-table tbody td::before {
+      content: attr(data-label);
+      /* Pega o texto do atributo data-label */
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      text-align: left;
+      margin-right: 10px;
+    }
+  }
+
+  @media (max-width: 768px) {
+
+    .form-control,
+    .form-select,
+    .btn {
+      min-height: 48px;
+      /* Altura boa para o toque */
+      font-size: 16px !important;
+      /* Tamanho legível */
+    }
+
+    /* Ajuste para o container não colar na borda */
+    .container {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    /* Espaçamento entre cards */
+    .card {
+      margin-bottom: 20px;
+      border-radius: 16px !important;
+      /* Mais arredondado no mobile */
+    }
+  }
+
+  /* =================================================
+     TRANSFORMAÇÃO DO CALENDÁRIO EM CARDS (MOBILE)
+     ================================================= */
+
+  @media (max-width: 768px) {
+
+    /* Remove as bordas da tabela padrão do calendário */
+    .fc-list-table td,
+    .fc-list-table th,
+    .fc-theme-standard .fc-list {
+      border: none !important;
+    }
+
+    /* Estilo do Cabeçalho do Dia (Ex: "Sexta-feira, 28 de Novembro") */
+    .fc-list-day-cushion {
+      background-color: transparent !important;
+      padding: 20px 5px 5px 5px !important;
+      /* Mais espaço em cima */
+    }
+
+    .fc-list-day-text {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--primary-color);
+      /* Usa a cor do tema */
+      text-transform: capitalize;
+    }
+
+    .fc-list-day-side-text {
+      font-weight: 600;
+      color: #888;
+    }
+
+    /* Transforma a LINHA do evento em um CARTÃO */
+    .fc-list-event {
+      display: block;
+      /* Quebra o comportamento de tabela */
+      background-color: #fff !important;
+      border-radius: 16px;
+      /* Borda bem arredondada */
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      /* Sombra suave */
+      border: 1px solid #f0f0f0;
+      margin-bottom: 12px;
+      /* Espaço entre os agendamentos */
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .fc-list-event:active {
+      transform: scale(0.98);
+      /* Efeito de clique */
+    }
+
+    /* Remove o hover cinza padrão */
+    .fc-list-event:hover td {
+      background-color: #fff !important;
+    }
+
+    /* Ajusta as células internas para ficarem bonitas no card */
+    .fc-list-event-time {
+      display: inline-block;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #333;
+      padding: 15px 0 0 15px !important;
+      /* Posiciona no topo esquerdo */
+      border: none !important;
+      width: auto !important;
+    }
+
+    .fc-list-event-graphic {
+      display: none;
+      /* Esconde a bolinha padrão (vamos usar a borda colorida) */
+    }
+
+    .fc-list-event-title {
+      display: block;
+      padding: 5px 15px 15px 15px !important;
+      /* Espaçamento interno */
+      border: none !important;
+    }
+
+    /* ADICIONA UMA BORDA COLORIDA NA ESQUERDA BASEADA NO STATUS */
+    /* Infelizmente o FullCalendar não passa a classe do status para a TR facilmente no modo lista,
+       então usamos o CSS padrão da cor do evento (border-color) */
+    .fc-list-event {
+      border-left: 6px solid;
+      /* A cor vem inline do React (backgroundColor) */
+      overflow: hidden;
+    }
+
+    /* Ajuste do toolbar do topo para caber no celular */
+    .fc-header-toolbar {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .fc-toolbar-chunk {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    }
+  }
+
+  /*========ESTILO DO CALENDÁRIO DE DASHBOARD (Pontos de legenda coloridos)===========================*/
+
+  /* Container do dia */
+  .fc-daygrid-day-frame {
+    min-height: 100px;
+    /* Altura mínima para caber os pontos */
+  }
+
+  /* Container dos pontos */
+  .dashboard-dots-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  /* A linha do ponto (Bolinha + Texto) */
+  .dot-row {
+    display: flex;
+    align-items: center;
+  }
+
+  /* A Bolinha em si */
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    display: inline-block;
+  }
+
+  /* Cores */
+  .dot-blue {
+    background-color: #0d6efd;
+  }
+
+  /* Confirmado */
+  .dot-green {
+    background-color: #198754;
+  }
+
+  /* Concluído */
+  .dot-yellow {
+    background-color: #ffc107;
+  }
+
+  /* Pendente */
+  .dot-red {
+    background-color: #dc3545;
+  }
+
+  /* Cancelado */
+
+  /* Remove a listagem padrão de eventos do FullCalendar nesse modo */
+  .fc-daygrid-event-harness {
+    display: none;
+  }
+}

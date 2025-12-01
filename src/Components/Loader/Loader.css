@@ -1,0 +1,9 @@
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    min-height: 200px; /* Altura mínima para não colapsar */
+    width: 100%;
+}

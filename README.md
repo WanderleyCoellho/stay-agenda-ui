@@ -1,16 +1,99 @@
-# React + Vite
+### 📘 Stay Agenda UI (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Salve este conteúdo no `README.md` da pasta do React.
 
-Currently, two official plugins are available:
+````markdown
+# 📱 Stay Agenda (Frontend)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Interface Web e Mobile (PWA) desenvolvida em React para gestão de clínicas de estética e barbearias. Focada em experiência de uso "Mobile-First", funcionando como um aplicativo nativo quando instalada no celular.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tecnologias & Ferramentas
 
-## Expanding the ESLint configuration
+* **Framework:** React 18 (Vite)
+* **Linguagem:** JavaScript (ES6+)
+* **Estilização:** Bootstrap 5 + CSS Customizado (Responsivo)
+* **Mobile:** PWA (Progressive Web App) com `vite-plugin-pwa`
+* **Comunicação API:** Axios
+* **Roteamento:** React Router Dom 6
+* **Calendário:** FullCalendar (Visões de Mês, Semana, Dia e Lista)
+* **Relatórios:** `react-to-print` + `html2pdf.js`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 📱 Funcionalidades Principais
+
+### 1. PWA (Instalável)
+O sistema possui um `manifest.json` configurado. Ao acessar pelo navegador do celular (Chrome/Safari), o usuário é convidado a **"Instalar o App"**.
+* Funciona offline (cache básico).
+* Ícone na tela inicial.
+* Abre em tela cheia (sem barra de endereços).
+
+### 2. Agendamento Inteligente
+* **Cálculo Automático:** Ao selecionar um procedimento e data, o sistema consulta o backend para aplicar promoções vigentes.
+* **Múltiplos Pagamentos:** Permite lançar Sinal + Restante, calculando o saldo devedor em tempo real.
+* **Taxas:** Exibe visualmente o desconto de taxas de maquininha (se configurado).
+
+### 3. Dashboard Financeiro
+* **Previsão vs Realizado:** Painéis separados para dinheiro em caixa (Concluído/Sinal) e dinheiro a receber (Agendado).
+* **Snapshot:** O sistema respeita os valores históricos salvos no agendamento, não alterando relatórios passados se o preço do serviço mudar hoje.
+
+### 4. Multimídia (Histórico Visual)
+* Upload de fotos e vídeos de "Antes e Depois" diretamente da câmera do celular.
+* Galeria organizada por cliente.
+
+### 5. Comprovantes
+* Geração de comprovante em PDF direto no navegador.
+* Layout responsivo (A4 ou Cupom Térmico).
+* Botão de compartilhamento nativo (Mobile).
+
+---
+
+## 🚀 Como Rodar Localmente
+
+### Pré-requisitos
+* Node.js (v18 ou superior) instalado.
+* Backend Java rodando (localmente ou na nuvem).
+
+### 1. Instalar Dependências
+No terminal, na raiz do projeto:
+
+```bash
+npm install
+````
+
+### 2\. Configurar Ambiente
+
+Crie um arquivo `.env` na raiz se precisar apontar para um backend específico (Padrão: localhost:8080).
+
+```env
+VITE_API_URL=http://localhost:8080/api
+```
+
+### 3\. Rodar a Aplicação
+
+```bash
+npm run dev
+```
+
+O sistema abrirá em: `http://localhost:5173`
+
+-----
+
+## ☁️ Deploy (Vercel)
+
+O projeto está otimizado para deploy na **Vercel**.
+
+1.  Importe o repositório na Vercel.
+2.  Configure a variável de ambiente `VITE_API_URL` apontando para o seu backend Java (ex: Render).
+3.  O `vercel.json` já está configurado para tratar as rotas de SPA (Single Page Application).
+
+-----
+
+## 🎨 Personalização (White Label)
+
+O sistema possui um **Contexto de Tema** (`ThemeContext`) e **Empresa** (`EmpresaContext`).
+
+  * **Cores:** O usuário pode alterar a cor principal do sistema na engrenagem de configurações.
+  * **Identidade:** Logo e Nome da empresa são carregados dinamicamente do backend e aplicados na Navbar, Login e PDF.

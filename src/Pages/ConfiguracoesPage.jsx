@@ -4,16 +4,15 @@ import { EmpresaContext } from "../Context/EmpresaContext";
 import { ThemeContext } from "../Context/ThemeContext";
 
 function ConfiguracoesPage() {
-    // --- CONTEXTOS ---
+    // Contextos
     const { nomeEmpresa, logo, carregarDadosEmpresa } = useContext(EmpresaContext);
     const { primaryColor, changeThemeColor } = useContext(ThemeContext);
 
-    // --- ESTADOS FORMULÁRIO EMPRESA ---
+    // Estados
     const [nomeInput, setNomeInput] = useState("");
     const [arquivoInput, setArquivoInput] = useState(null);
     const [preview, setPreview] = useState(null);
 
-    // Carrega dados atuais
     useEffect(() => {
         setNomeInput(nomeEmpresa !== "Stay Agenda" ? nomeEmpresa : "");
         setPreview(logo);
@@ -46,108 +45,69 @@ function ConfiguracoesPage() {
         }
     };
 
-    // --- CORES PRÉ-DEFINIDAS (Paletas Bonitas) ---
     const coresPredefinidas = [
-        "#6f42c1", // Roxo Original
-        "#0d6efd", // Azul Royal
-        "#198754", // Verde
-        "#d63384", // Rosa Pink
-        "#fd7e14", // Laranja
-        "#212529", // Preto/Dark
+        "#6f42c1", "#0d6efd", "#198754", "#d63384", "#fd7e14", "#212529"
     ];
 
     return (
         <div className="container mt-4 mb-5">
-            <h2 className="mb-4 fw-bold text-secondary">⚙️ Configurações Gerais</h2>
+            <h2 className="mb-4 fw-bold text-secondary">⚙️ Configurações</h2>
 
             <div className="row g-4">
 
-                {/* === CARD 1: IDENTIDADE DA EMPRESA (LADO ESQUERDO) === */}
-                <div className="col-md-6">
+                {/* --- CARD 1: EMPRESA --- */}
+                <div className="col-12 col-md-6">
                     <div className="card shadow h-100 border-0">
                         <div className="card-header bg-white py-3 border-bottom">
-                            <h5 className="mb-0 fw-bold text-primary">🏢 Identidade Visual</h5>
+                            <h5 className="mb-0 fw-bold text-primary">🏢 Identidade</h5>
                         </div>
                         <div className="card-body">
                             <form onSubmit={handleSaveEmpresa}>
                                 <div className="mb-3">
-                                    <label className="form-label fw-bold">Nome do Estabelecimento</label>
-                                    <input
-                                        type="text" className="form-control" required
-                                        value={nomeInput} onChange={e => setNomeInput(e.target.value)}
-                                        placeholder="Ex: Barbearia do Zé"
-                                    />
+                                    <label className="form-label fw-bold">Nome</label>
+                                    <input type="text" className="form-control" required value={nomeInput} onChange={e => setNomeInput(e.target.value)} />
                                 </div>
-
                                 <div className="mb-3">
-                                    <label className="form-label fw-bold">Logotipo</label>
+                                    <label className="form-label fw-bold">Logo</label>
                                     <input type="file" className="form-control" accept="image/*" onChange={handleFileChange} />
-                                    <div className="form-text">Aparece no Menu, Login e PDF.</div>
                                 </div>
-
-                                {/* Preview da Logo */}
-                                <div className="mb-3 text-center p-3 border rounded bg-light" style={{ minHeight: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {preview ? (
-                                        <img src={preview} alt="Logo" style={{ height: "80px", objectFit: "contain" }} />
-                                    ) : (
-                                        <span className="text-muted">Sem logo selecionada</span>
-                                    )}
+                                <div className="mb-3 text-center p-3 border rounded bg-light">
+                                    {preview ? <img src={preview} alt="Logo" style={{ height: "60px", objectFit: "contain" }} /> : <span className="text-muted">Sem logo</span>}
                                 </div>
-
-                                <button className="btn btn-primary w-100 fw-bold">Salvar Identidade</button>
+                                <button className="btn btn-primary w-100 fw-bold">Salvar</button>
                             </form>
                         </div>
                     </div>
                 </div>
 
-                {/* === CARD 2: TEMA E CORES (LADO DIREITO) === */}
-                {/* Verifique se este bloco está no seu código! */}
-                <div className="col-md-6">
+                {/* --- CARD 2: TEMA (VERIFIQUE SE ESTE BLOCO ESTÁ AQUI) --- */}
+                <div className="col-12 col-md-6">
                     <div className="card shadow h-100 border-0">
                         <div className="card-header bg-white py-3 border-bottom">
-                            <h5 className="mb-0 fw-bold text-primary">🎨 Aparência do Sistema</h5>
+                            <h5 className="mb-0 fw-bold text-primary">🎨 Cores do Sistema</h5>
                         </div>
                         <div className="card-body">
-                            <p className="text-muted small">Escolha a cor principal que combina com sua marca.</p>
-
-                            <label className="form-label fw-bold mb-3">Cores Sugeridas:</label>
+                            <label className="form-label fw-bold mb-2">Escolha uma cor:</label>
                             <div className="d-flex flex-wrap gap-2 mb-4">
                                 {coresPredefinidas.map(cor => (
                                     <button
-                                        key={cor}
-                                        onClick={() => changeThemeColor(cor)}
+                                        key={cor} onClick={() => changeThemeColor(cor)}
                                         className="btn rounded-circle shadow-sm border-2"
                                         style={{
-                                            width: '40px', height: '40px',
-                                            backgroundColor: cor,
+                                            width: '40px', height: '40px', backgroundColor: cor,
                                             borderColor: primaryColor === cor ? '#000' : 'transparent',
-                                            transform: primaryColor === cor ? 'scale(1.1)' : 'scale(1)',
-                                            transition: 'transform 0.2s'
+                                            transform: primaryColor === cor ? 'scale(1.1)' : 'scale(1)'
                                         }}
-                                        title={cor}
                                     />
                                 ))}
                             </div>
-
                             <hr />
-
-                            <label className="form-label fw-bold mb-2">Cor Personalizada:</label>
                             <div className="d-flex align-items-center gap-3">
                                 <input
-                                    type="color"
-                                    className="form-control form-control-color"
-                                    value={primaryColor}
-                                    onChange={(e) => changeThemeColor(e.target.value)}
-                                    title="Escolher cor exata"
+                                    type="color" className="form-control form-control-color"
+                                    value={primaryColor} onChange={(e) => changeThemeColor(e.target.value)}
                                 />
-                                <div className="form-text m-0">
-                                    Toque na caixa para escolher qualquer cor.
-                                </div>
-                            </div>
-
-                            {/* Preview Visual */}
-                            <div className="mt-4 p-3 rounded text-white text-center fw-bold shadow-sm" style={{ backgroundColor: primaryColor, transition: 'background 0.3s' }}>
-                                VISUALIZAÇÃO DO BOTÃO
+                                <span className="text-muted small">Ou selecione manualmente</span>
                             </div>
                         </div>
                     </div>

@@ -42,7 +42,7 @@ import PromocaoFormPage from "./Pages/PromocaoFormPage";
 
 // Configurações
 import FormasPagamentoPage from "./Pages/FormasPagamentoPage";
-import ConfigEmpresaPage from "./Pages/ConfigEmpresaPage";
+import ConfiguracoesPage from "./Pages/ConfiguracoesPage";
 
 // Calendário
 import CalendarioPage from "./Pages/CalendarioPage";
@@ -99,7 +99,7 @@ function App() {
 
             {/* Configurações */}
             <Route path="/config/pagamentos" element={<PrivateRoute><FormasPagamentoPage /></PrivateRoute>} />
-            <Route path="/config/geral" element={<PrivateRoute><ConfigEmpresaPage /></PrivateRoute>} />
+            <Route path="/config/geral" element={<PrivateRoute><ConfiguracoesPage /></PrivateRoute>} />
 
             {/* Mapeamentos */}
             <Route path="/mapeamentos/novo/:agendamentoId" element={<PrivateRoute><MapeamentoFormPage /></PrivateRoute>} />

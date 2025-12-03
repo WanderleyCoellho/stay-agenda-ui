@@ -44,7 +44,7 @@ function Navbar() {
 
             <li className="nav-item mx-1"><Link className={`nav-link ${location.pathname === '/' ? 'active fw-bold' : ''}`} to="/">Dashboard</Link></li>
             <li className="nav-item mx-1"><Link className={`nav-link ${location.pathname === '/calendario' ? 'active fw-bold' : ''}`} to="/calendario">Calendário</Link></li>
-            <li className="nav-item mx-1"><Link className={`nav-link ${location.pathname.includes('/agendamentos') ? 'active fw-bold' : ''}`} to="/agendamentos">Lista</Link></li>
+            <li className="nav-item mx-1"><Link className={`nav-link ${location.pathname.includes('/agendamentos') ? 'active fw-bold' : ''}`} to="/agendamentos">Agenda</Link></li>
             <li className="nav-item mx-1"><Link className={`nav-link ${location.pathname.includes('/clientes') ? 'active fw-bold' : ''}`} to="/clientes">Clientes</Link></li>
 
             <li className="nav-item dropdown mx-1">

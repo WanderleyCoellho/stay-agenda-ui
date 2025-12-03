@@ -29,10 +29,39 @@ function AgendamentosPage() {
     return `${dia}/${mes}/${ano}`;
   };
 
+  const renderProcedimentos = (ag) => {
+    let lista = [];
+    if (ag.procedimentos && Array.isArray(ag.procedimentos)) {
+      lista = ag.procedimentos;
+    } else if (ag.listaProcedimentos && Array.isArray(ag.listaProcedimentos)) {
+      lista = ag.listaProcedimentos;
+    }
+
+    if (lista.length > 0) {
+      const primeiroNome = lista[0].procedimento || lista[0].nome;
+      const restantes = lista.length - 1;
+
+      if (restantes > 0) {
+        return (
+          <span>
+            {primeiroNome} <span className="badge bg-secondary ms-1" style={{ fontSize: '0.7em' }}>+{restantes}</span>
+          </span>
+        );
+      } else {
+        return primeiroNome;
+      }
+    }
+
+    if (ag.procedimento) return ag.procedimento.procedimento;
+    if (ag.procedimentos && !Array.isArray(ag.procedimentos)) return ag.procedimentos.procedimento;
+
+    return "---";
+  };
+
   return (
     <div className="container mt-4 mb-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold text-secondary">📅 Agenda</h2>
+        <h2 className="fw-bold text-secondary">📅 Agenda (Lista)</h2>
         <Link to="/agendamentos/novo" className="btn btn-primary shadow-sm rounded-pill">
           + Novo
         </Link>
@@ -40,15 +69,14 @@ function AgendamentosPage() {
 
       <div className="card shadow border-0 bg-transparent">
         <div className="card-body p-0">
-          
-          {/* ADICIONEI A CLASSE 'mobile-table' AQUI */}
-          <table className="table table-hover align-middle mb-0 mobile-table" style={{background: 'white', borderRadius: '12px'}}>
+
+          <table className="table table-hover align-middle mb-0 mobile-table" style={{ background: 'white', borderRadius: '12px' }}>
             <thead className="bg-light">
               <tr>
                 <th className="ps-4">Data</th>
                 <th>Hora</th>
                 <th>Cliente</th>
-                <th>Procedimento</th>
+                <th>Procedimentos</th>
                 <th>Status</th>
                 <th className="text-end pe-4">Ações</th>
               </tr>
@@ -56,53 +84,56 @@ function AgendamentosPage() {
             <tbody>
               {agendamentos.map((ag) => (
                 <tr key={ag.id}>
-                  {/* ADICIONEI data-label EM TODOS OS TDs */}
-                  <td className="ps-4 text-muted" data-label="Data">
-                      {formatDate(ag.data)}
+                  <td className="ps-4 text-muted" data-label="Data" style={{ whiteSpace: 'nowrap' }}>
+                    {formatDate(ag.data)}
                   </td>
-                  
-                  <td className="fw-bold text-primary" data-label="Hora">
-                      {ag.horaInicial}
+
+                  <td className="fw-bold text-primary" data-label="Hora" style={{ whiteSpace: 'nowrap' }}>
+                    {ag.horaInicial}
                   </td>
-                  
-                  <td className="fw-bold" data-label="Cliente">
-                      {ag.clientes?.nome || "---"}
+
+                  {/* Cliente: Pode quebrar linha se for nome grande */}
+                  <td className="fw-bold" data-label="Cliente" style={{ minWidth: '150px' }}>
+                    {ag.clientes?.nome || "---"}
                   </td>
-                  
-                  <td data-label="Procedimento">
-                      {ag.procedimento?.procedimento || ag.procedimentos?.procedimento || "---"}
+
+                  {/* Procedimentos: Pode quebrar linha à vontade */}
+                  <td data-label="Procedimentos" className="text-dark" style={{ minWidth: '150px', wordWrap: 'break-word' }}>
+                    {renderProcedimentos(ag)}
                   </td>
-                  
+
                   <td data-label="Status">
-                    <span className={`badge rounded-pill ${
-                      ag.status === 'CONCLUIDO' ? 'bg-success' : 
-                      ag.status === 'CONFIRMADO' ? 'bg-primary' : 
-                      ag.status === 'CANCELADO' ? 'bg-danger' : 'bg-warning text-dark'
-                    }`}>
+                    <span className={`badge rounded-pill ${ag.status === 'CONCLUIDO' ? 'bg-success' :
+                      ag.status === 'CONFIRMADO' ? 'bg-primary' :
+                        ag.status === 'CANCELADO' ? 'bg-danger' : 'bg-warning text-dark'
+                      }`}>
                       {ag.status || "PENDENTE"}
                     </span>
                   </td>
 
-                  <td className="text-end pe-4" data-label="Ações">
-                    <Link 
-                      to={`/mapeamentos/novo/${ag.id}`} 
-                      className="btn btn-sm btn-outline-warning me-2"
-                      title="Anexar Foto"
-                    >
-                      📷
-                    </Link>
-                    <Link 
-                      to={`/agendamentos/editar/${ag.id}`} 
-                      className="btn btn-sm btn-outline-primary me-2"
-                    >
-                      ✏️
-                    </Link>
-                    <button 
-                      className="btn btn-sm btn-outline-danger" 
-                      onClick={() => handleDelete(ag.id)}
-                    >
-                      🗑️
-                    </button>
+                  {/* Ações: text-nowrap garante que fiquem lado a lado */}
+                  <td className="text-end pe-4 text-nowrap" data-label="Ações">
+                    <div className="d-inline-flex gap-2">
+                      <Link
+                        to={`/mapeamentos/novo/${ag.id}`}
+                        className="btn btn-sm btn-outline-warning"
+                        title="Anexar Foto"
+                      >
+                        📷
+                      </Link>
+                      <Link
+                        to={`/agendamentos/editar/${ag.id}`}
+                        className="btn btn-sm btn-outline-primary"
+                      >
+                        ✏️
+                      </Link>
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDelete(ag.id)}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

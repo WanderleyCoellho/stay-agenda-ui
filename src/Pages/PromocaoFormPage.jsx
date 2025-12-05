@@ -1,17 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../Services/api";
+import { ThemeContext } from "../Context/ThemeContext"; // 1. Importe o Contexto
 
 function PromocaoFormPage() {
+  const { primaryColor } = useContext(ThemeContext); // 2. Pegue a cor
+
   const [descricao, setDescricao] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [status, setStatus] = useState("ATIVA");
-  
+
   const [valorPromocional, setValorPromocional] = useState("");
-  const [tipoDesconto, setTipoDesconto] = useState("FIXO"); // FIXO ou PORCENTAGEM
-  
-  const [procedimentoId, setProcedimentoId] = useState(""); // Se vazio = Global
+  const [tipoDesconto, setTipoDesconto] = useState("FIXO");
+
+  const [procedimentoId, setProcedimentoId] = useState("");
   const [listaProcedimentos, setListaProcedimentos] = useState([]);
 
   const [id, setId] = useState(null);
@@ -19,7 +22,6 @@ function PromocaoFormPage() {
   const { id: paramId } = useParams();
 
   useEffect(() => {
-    // Carrega procedimentos para o select
     api.get("/procedimentos").then((res) => setListaProcedimentos(res.data));
   }, []);
 
@@ -30,16 +32,16 @@ function PromocaoFormPage() {
           const dados = response.data;
           setDescricao(dados.descricao);
           setDataInicio(dados.dataInicio);
-          setDataFim(dados.dataFim || ""); // Se for null, vira vazio
+          setDataFim(dados.dataFim || "");
           setStatus(dados.status);
           setValorPromocional(dados.valorPromocional);
           setTipoDesconto(dados.tipoDesconto);
           setId(dados.id);
 
           if (dados.procedimento) {
-              setProcedimentoId(dados.procedimento.id);
+            setProcedimentoId(dados.procedimento.id);
           } else {
-              setProcedimentoId(""); // Global
+            setProcedimentoId("");
           }
         })
         .catch((error) => console.error("Erro ao carregar promoção", error));
@@ -52,16 +54,14 @@ function PromocaoFormPage() {
     const dadosParaEnviar = {
       descricao,
       dataInicio,
-      dataFim: dataFim || null, // Se vazio, envia null (indeterminado)
+      dataFim: dataFim || null,
       status,
       valorPromocional: parseFloat(valorPromocional),
       tipoDesconto,
-      // Se procedimentoId for vazio, envia NULL (Promoção Global)
-      // Se tiver ID, envia o objeto com ID
       procedimento: procedimentoId ? { id: procedimentoId } : null
     };
 
-    const request = id 
+    const request = id
       ? api.put(`/promocoes/${id}`, dadosParaEnviar)
       : api.post("/promocoes", dadosParaEnviar);
 
@@ -74,17 +74,20 @@ function PromocaoFormPage() {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="card shadow">
-        <div className="card-header bg-success text-white">
-          <h3>{id ? "Editar Promoção" : "Nova Promoção"}</h3>
+    <div className="container mt-5 mb-5">
+      <div className="card shadow border-0">
+
+        {/* --- CABEÇALHO DINÂMICO --- */}
+        <div className="card-header text-white py-3" style={{ backgroundColor: primaryColor }}>
+          <h5 className="mb-0 fw-bold">{id ? "Editar" : "Nova"} Promoção</h5>
         </div>
-        <div className="card-body">
+
+        <div className="card-body p-4">
           <form onSubmit={handleSubmit}>
-            
+
             <div className="mb-3">
-              <label className="form-label">Descrição da Campanha</label>
-              <input 
+              <label className="form-label fw-bold">Descrição da Campanha *</label>
+              <input
                 type="text" className="form-control" placeholder="Ex: Black Friday, Desconto de Natal..."
                 required value={descricao} onChange={(e) => setDescricao(e.target.value)}
               />
@@ -92,66 +95,75 @@ function PromocaoFormPage() {
 
             {/* Linha de Datas */}
             <div className="row mb-3">
-                <div className="col-md-4">
-                    <label className="form-label">Data Início</label>
-                    <input 
-                        type="date" className="form-control" required
-                        value={dataInicio} onChange={(e) => setDataInicio(e.target.value)}
-                    />
-                </div>
-                <div className="col-md-4">
-                    <label className="form-label">Data Fim (Opcional)</label>
-                    <input 
-                        type="date" className="form-control"
-                        value={dataFim} onChange={(e) => setDataFim(e.target.value)}
-                    />
-                    <small className="text-muted">Deixe vazio para prazo indeterminado.</small>
-                </div>
-                <div className="col-md-4">
-                    <label className="form-label">Status</label>
-                    <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-                        <option value="ATIVA">ATIVA</option>
-                        <option value="PAUSADA">PAUSADA</option>
-                        <option value="CANCELADA">CANCELADA</option>
-                    </select>
-                </div>
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Data Início *</label>
+                <input
+                  type="date" className="form-control" required
+                  value={dataInicio} onChange={(e) => setDataInicio(e.target.value)}
+                />
+              </div>
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Data Fim (Opcional)</label>
+                <input
+                  type="date" className="form-control"
+                  value={dataFim} onChange={(e) => setDataFim(e.target.value)}
+                />
+                <small className="text-muted">Vazio = Indeterminado</small>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Status</label>
+                <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="ATIVA">ATIVA</option>
+                  <option value="PAUSADA">PAUSADA</option>
+                  <option value="CANCELADA">CANCELADA</option>
+                </select>
+              </div>
             </div>
 
-            {/* Linha Financeira */}
-            <div className="card bg-light p-3 mb-3">
-                <h6 className="text-muted mb-3">Regra do Desconto</h6>
-                <div className="row">
-                    <div className="col-md-4">
-                        <label className="form-label">Tipo de Desconto</label>
-                        <select className="form-select" value={tipoDesconto} onChange={(e) => setTipoDesconto(e.target.value)}>
-                            <option value="FIXO">Valor Fixo (R$)</option>
-                            <option value="PORCENTAGEM">Porcentagem (%)</option>
-                        </select>
-                    </div>
-                    <div className="col-md-4">
-                        <label className="form-label">Valor do Desconto</label>
-                        <div className="input-group">
-                            <span className="input-group-text">{tipoDesconto === 'FIXO' ? 'R$' : '%'}</span>
-                            <input 
-                                type="number" step="0.01" className="form-control" required
-                                value={valorPromocional} onChange={(e) => setValorPromocional(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <div className="col-md-4">
-                        <label className="form-label">Aplicar em:</label>
-                        <select className="form-select" value={procedimentoId} onChange={(e) => setProcedimentoId(e.target.value)}>
-                            <option value="">TODOS OS PROCEDIMENTOS (Global)</option>
-                            {listaProcedimentos.map(proc => (
-                                <option key={proc.id} value={proc.id}>{proc.procedimento} (R$ {proc.valor})</option>
-                            ))}
-                        </select>
-                    </div>
+            {/* Regra Financeira */}
+            <div className="card bg-light border-0 p-3 mb-4 rounded-3">
+              <h6 className="fw-bold text-secondary mb-3">Regra do Desconto</h6>
+              <div className="row g-3">
+                <div className="col-md-4">
+                  <label className="form-label small text-muted">Tipo de Desconto</label>
+                  <select className="form-select" value={tipoDesconto} onChange={(e) => setTipoDesconto(e.target.value)}>
+                    <option value="FIXO">Valor Fixo (R$)</option>
+                    <option value="PORCENTAGEM">Porcentagem (%)</option>
+                  </select>
                 </div>
+                <div className="col-md-4">
+                  <label className="form-label small text-muted">Valor do Desconto</label>
+                  <div className="input-group">
+                    <span className="input-group-text">{tipoDesconto === 'FIXO' ? 'R$' : '%'}</span>
+                    <input
+                      type="number" step="0.01" className="form-control" required
+                      value={valorPromocional} onChange={(e) => setValorPromocional(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label small text-muted">Aplicar em:</label>
+                  <select className="form-select" value={procedimentoId} onChange={(e) => setProcedimentoId(e.target.value)}>
+                    <option value="">🌍 TODOS (Global)</option>
+                    {listaProcedimentos.map(proc => (
+                      <option key={proc.id} value={proc.id}>{proc.procedimento} (R$ {proc.valor})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <button type="submit" className="btn btn-success me-2">Salvar</button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate("/promocoes")}>Cancelar</button>
+            <div className="d-grid gap-2 d-md-flex justify-content-md-end">
+              <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => navigate("/promocoes")}>
+                Cancelar
+              </button>
+
+              {/* --- BOTÃO DINÂMICO --- */}
+              <button type="submit" className="btn text-white fw-bold rounded-pill px-4 shadow-sm" style={{ backgroundColor: primaryColor }}>
+                Salvar Promoção
+              </button>
+            </div>
+
           </form>
         </div>
       </div>

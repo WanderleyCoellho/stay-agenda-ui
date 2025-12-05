@@ -1,31 +1,33 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../Services/api";
+import { ThemeContext } from "../Context/ThemeContext"; // 1. Importe o Contexto
 
 function ClienteHistoricoPage() {
+  const { primaryColor } = useContext(ThemeContext); // 2. Pegue a cor do tema
   const { id } = useParams();
+
   const [mapeamentos, setMapeamentos] = useState([]);
   const [cliente, setCliente] = useState({ nome: "" });
 
   useEffect(() => {
+    // Busca dados do cliente
     api.get(`/clientes/${id}`).then(res => setCliente(res.data));
-    
+
+    // Busca histórico (mapeamentos)
     api.get(`/mapeamentos/cliente/${id}`)
-       .then(res => {
-          console.log("Histórico carregado:", res.data); // Confira aqui se o 'agendamentos' veio preenchido
-          setMapeamentos(res.data);
-       })
-       .catch(err => console.error("Erro ao buscar histórico:", err));
+      .then(res => setMapeamentos(res.data))
+      .catch(err => console.error("Erro ao buscar histórico:", err));
   }, [id]);
 
   const handleDelete = (mapId) => {
-    if(window.confirm("Excluir este registro?")) {
+    if (window.confirm("Excluir este registro?")) {
       api.delete(`/mapeamentos/${mapId}`)
-         .then(() => setMapeamentos(mapeamentos.filter(m => m.id !== mapId)));
+        .then(() => setMapeamentos(mapeamentos.filter(m => m.id !== mapId)));
     }
   }
 
-  // Função para formatar data (yyyy-mm-dd -> dd/mm/yyyy)
+  // Formata data YYYY-MM-DD para DD/MM/YYYY
   const formatDate = (dateString) => {
     if (!dateString) return "N/D";
     const [ano, mes, dia] = dateString.split("-");
@@ -33,88 +35,94 @@ function ClienteHistoricoPage() {
   };
 
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2>Histórico: {cliente.nome}</h2>
-            <p className="text-muted">Rastreabilidade de procedimentos e mídias</p>
+    <div className="container mt-4 mb-5">
+
+      {/* --- CABEÇALHO DO CLIENTE --- */}
+      <div className="card shadow border-0 mb-4">
+        <div className="card-header text-white py-3 d-flex justify-content-between align-items-center"
+          style={{ backgroundColor: primaryColor }}>
+          <div>
+            <h5 className="mb-0 fw-bold">📁 Histórico: {cliente.nome}</h5>
+            <small className="opacity-75">Galeria de procedimentos realizados</small>
+          </div>
+          <Link to="/clientes" className="btn btn-light btn-sm fw-bold text-dark rounded-pill px-3">
+            Voltar
+          </Link>
         </div>
-        <Link to="/clientes" className="btn btn-secondary">Voltar</Link>
       </div>
 
+      {/* --- GALERIA --- */}
       <div className="row">
         {mapeamentos.length === 0 ? (
-            <div className="col-12">
-                <div className="alert alert-info">Nenhum registro encontrado.</div>
+          <div className="col-12">
+            <div className="alert alert-secondary text-center py-5 border-0 shadow-sm">
+              <div className="fs-1 mb-2">📷</div>
+              <p className="mb-0">Nenhum registro de mídia encontrado para este cliente.</p>
             </div>
+          </div>
         ) : (
-            mapeamentos.map((item) => (
-              <div key={item.id} className="col-md-6 col-lg-4 mb-4"> {/* Ajustei colunas */}
-                <div className="card shadow-sm h-100 border-0">
-                  
-                  {/* CABEÇALHO DO CARD: DATA E HORA */}
-                  <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                    <span className="badge bg-primary">
-                        {item.agendamentos ? formatDate(item.agendamentos.data) : "Data Antiga"}
-                    </span>
-                    <small className="text-muted fw-bold">
-                        {item.agendamentos ? `${item.agendamentos.horaInicial}h` : "--:--"}
-                    </small>
-                  </div>
+          mapeamentos.map((item) => (
+            <div key={item.id} className="col-md-6 col-lg-4 mb-4">
+              <div className="card shadow-sm h-100 border-0">
 
-                  {/* MÍDIA */}
-                  <div className="bg-dark d-flex justify-content-center align-items-center position-relative" style={{height: "250px", overflow: "hidden"}}>
-                    {item.midia ? (
-                        item.tipoArquivo && item.tipoArquivo.includes("video") ? (
-                            <video controls style={{maxWidth:"100%", maxHeight:"100%"}}>
-                                <source src={`data:${item.tipoArquivo};base64,${item.midia}`} />
-                            </video>
-                        ) : (
-                            <img 
-                                src={`data:${item.tipoArquivo};base64,${item.midia}`} 
-                                alt="Mapeamento" 
-                                style={{maxWidth:"100%", maxHeight:"100%", objectFit:"contain"}}
-                            />
-                        )
-                    ) : (
-                        <span className="text-white-50">Sem imagem</span>
-                    )}
-                  </div>
+                {/* DATA E HORA (Topo do Card) */}
+                <div className="card-header bg-white border-bottom-0 pt-3 pb-2 d-flex justify-content-between align-items-center">
+                  <span className="badge bg-light text-dark border">
+                    📅 {item.agendamentos ? formatDate(item.agendamentos.data) : "Data Antiga"}
+                  </span>
+                  <small className="text-muted fw-bold">
+                    {item.agendamentos ? `${item.agendamentos.horaInicial}h` : "--:--"}
+                  </small>
+                </div>
 
-                  {/* CORPO DO CARD */}
-                  <div className="card-body">
-                    <h5 className="card-title fw-bold text-dark">
-                        {item.procedimentos?.procedimento || "Procedimento"}
-                    </h5>
-                    
-                    {/* Descrição do Mapeamento (Upload) */}
-                    <p className="card-text mb-2">
-                        <strong>Obs Mídia:</strong> {item.descricao || "Sem observações."}
-                    </p>
+                {/* ÁREA DA MÍDIA */}
+                <div className="bg-light d-flex justify-content-center align-items-center position-relative overflow-hidden" style={{ height: "250px" }}>
+                  {item.midia ? (
+                    <>
+                      {item.tipoArquivo && item.tipoArquivo.includes("video") ? (
+                        <video controls style={{ maxWidth: "100%", maxHeight: "100%" }}>
+                          <source src={`data:${item.tipoArquivo};base64,${item.midia}`} />
+                        </video>
+                      ) : (
+                        <img
+                          src={`data:${item.tipoArquivo};base64,${item.midia}`}
+                          alt="Mapeamento"
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          // Clique para abrir em tela cheia (opcional, lógica simples)
+                          onClick={() => window.open(`data:${item.tipoArquivo};base64,${item.midia}`)}
+                          className="cursor-pointer"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-muted">Sem imagem</span>
+                  )}
+                </div>
 
-                    <hr />
+                {/* CORPO DO CARD */}
+                <div className="card-body">
+                  <h6 className="fw-bold text-dark mb-1">
+                    {item.procedimentos?.procedimento || "Procedimento"}
+                  </h6>
 
-                    {/* DETALHES DO AGENDAMENTO (RASTREABILIDADE) */}
-                    {item.agendamentos ? (
-                        <div className="alert alert-light border p-2 mb-0" style={{fontSize: "0.9em"}}>
-                            <strong>Detalhes do Agendamento:</strong>
-                            <ul className="mb-0 ps-3 mt-1">
-                                <li>Status: {item.agendamentos.status}</li>
-                                <li>Obs: {item.agendamentos.observacoes || "Nenhuma"}</li>
-                                {/* Você pode adicionar mais campos aqui se quiser */}
-                            </ul>
-                        </div>
-                    ) : (
-                        <small className="text-muted fst-italic">Vínculo de agendamento não encontrado.</small>
-                    )}
+                  <p className="card-text small text-muted mb-3">
+                    {item.descricao || "Sem observações."}
+                  </p>
 
-                    <button onClick={() => handleDelete(item.id)} className="btn btn-outline-danger btn-sm w-100 mt-3">
-                        🗑️ Excluir Registro
-                    </button>
-                  </div>
+                  {/* Detalhes do Agendamento (Expansível ou fixo) */}
+                  {item.agendamentos && (
+                    <div className="p-2 bg-light rounded border small mb-3">
+                      <strong>Agendamento:</strong> {item.agendamentos.status}
+                    </div>
+                  )}
+
+                  <button onClick={() => handleDelete(item.id)} className="btn btn-outline-danger btn-sm w-100 rounded-pill">
+                    🗑️ Excluir
+                  </button>
                 </div>
               </div>
-            ))
+            </div>
+          ))
         )}
       </div>
     </div>

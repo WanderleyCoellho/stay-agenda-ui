@@ -1,11 +1,12 @@
 import axios from "axios";
 
-// Lê a variável de ambiente. Se não existir, tenta usar localhost como fallback.
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+// Pega automaticamente o endereço que está no navegador (seja localhost ou IP)
+const currentHost = window.location.hostname;
 
 const api = axios.create({
-  baseURL: apiUrl,
-})
+  // Monta a URL dinamicamente: http://[O_QUE_TIVER_NA_BARRA]:8080/api
+  baseURL: `http://${currentHost}:8080/api`,
+});
 
 // --- INTERCEPTOR DE PEDIDO (REQUEST) ---
 // Antes de enviar qualquer coisa, coloca o crachá (Token)

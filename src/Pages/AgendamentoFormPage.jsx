@@ -4,12 +4,14 @@ import { useReactToPrint } from "react-to-print";
 import { Comprovante } from "../Components/Comprovante/Comprovante";
 import api from "../Services/api";
 import { EmpresaContext } from "../Context/EmpresaContext";
+import { ThemeContext } from "../Context/ThemeContext"; // <--- IMPORT NOVO
 import html2pdf from 'html2pdf.js';
 
 function AgendamentoFormPage() {
     const { nomeEmpresa, logo } = useContext(EmpresaContext);
+    const { primaryColor } = useContext(ThemeContext); // <--- PEGA A COR
 
-    // Estados Básicos (Inicializados com "" para evitar erro de null)
+    // Estados Básicos
     const [data, setData] = useState("");
     const [horaInicial, setHoraInicial] = useState("");
     const [horaFinal, setHoraFinal] = useState("");
@@ -17,7 +19,7 @@ function AgendamentoFormPage() {
     const [status, setStatus] = useState("PENDENTE");
     const [clienteId, setClienteId] = useState("");
 
-    // --- MÚLTIPLOS PROCEDIMENTOS (O ESTADO QUE ESTAVA FALTANDO) ---
+    // Múltiplos Procedimentos
     const [procedimentosSelecionados, setProcedimentosSelecionados] = useState([]);
     const [procedimentoInputId, setProcedimentoInputId] = useState("");
 
@@ -30,6 +32,7 @@ function AgendamentoFormPage() {
     const [nomePromocaoAtiva, setNomePromocaoAtiva] = useState("");
 
     const [formaSinalId, setFormaSinalId] = useState("");
+    const [formaPagamentoId, setFormaPagamentoId] = useState("");
     const [pagamentosMultiplos, setPagamentosMultiplos] = useState([]);
 
     // Listas
@@ -45,7 +48,7 @@ function AgendamentoFormPage() {
     const { id: paramId } = useParams();
     const componentRef = useRef();
 
-    // Helpers
+    // --- HELPERS E LÓGICA (Mantidos iguais) ---
     const criarDataSegura = (dataString) => {
         if (!dataString) return null;
         const partes = dataString.split('-');
@@ -65,7 +68,7 @@ function AgendamentoFormPage() {
                 return (
                     <div className="mt-2 p-2 bg-warning bg-opacity-10 border border-warning rounded small">
                         <div className="text-dark">Taxa ({forma.taxa}%) repassada.</div>
-                        <div className="fw-bold text-primary">
+                        <div className="fw-bold" style={{ color: primaryColor }}>
                             👉 Cobrar: R$ {totalACobrar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                     </div>
@@ -83,7 +86,6 @@ function AgendamentoFormPage() {
         return null;
     };
 
-    // Gestão de Pagamentos
     const adicionarLinhaPagamento = () => setPagamentosMultiplos([...pagamentosMultiplos, { tempId: Date.now(), formaId: "", valor: "" }]);
     const removerLinhaPagamento = (tempId) => setPagamentosMultiplos(pagamentosMultiplos.filter(p => p.tempId !== tempId));
     const atualizarLinhaPagamento = (tempId, campo, novoValor) => {
@@ -93,16 +95,12 @@ function AgendamentoFormPage() {
         }));
     };
 
-    // Gestão de Procedimentos
     const adicionarProcedimento = () => {
         if (!procedimentoInputId) return;
         const procOriginal = listaProcedimentos.find(p => p.id == procedimentoInputId);
         if (!procOriginal) return;
-
         const novaLista = [...procedimentosSelecionados, {
-            id: procOriginal.id,
-            nome: procOriginal.procedimento,
-            valor: procOriginal.valor
+            id: procOriginal.id, nome: procOriginal.procedimento, valor: procOriginal.valor
         }];
         setProcedimentosSelecionados(novaLista);
         recalcularTotal(novaLista, data);
@@ -115,7 +113,6 @@ function AgendamentoFormPage() {
         recalcularTotal(novaLista, data);
     };
 
-    // Carregamento
     useEffect(() => {
         const loadAllData = async () => {
             const reqClientes = api.get("/clientes").catch(() => ({ data: [] }));
@@ -147,26 +144,16 @@ function AgendamentoFormPage() {
                     if (dados.clientes) setClienteId(dados.clientes.id);
 
                     if (dados.procedimentos && Array.isArray(dados.procedimentos)) {
-                        setProcedimentosSelecionados(dados.procedimentos.map(p => ({
-                            id: p.id,
-                            nome: p.procedimento,
-                            valor: p.valor
-                        })));
-                    } else if (dados.procedimentos) { // Fallback legado
-                        setProcedimentosSelecionados([{
-                            id: dados.procedimentos.id,
-                            nome: dados.procedimentos.procedimento,
-                            valor: dados.procedimentos.valor
-                        }]);
+                        setProcedimentosSelecionados(dados.procedimentos.map(p => ({ id: p.id, nome: p.procedimento, valor: p.valor })));
+                    } else if (dados.procedimentos) {
+                        setProcedimentosSelecionados([{ id: dados.procedimentos.id, nome: dados.procedimentos.procedimento, valor: dados.procedimentos.valor }]);
                     }
 
                     if (dados.formaPagamentoSinal) setFormaSinalId(dados.formaPagamentoSinal.id);
 
                     if (dados.pagamentos && dados.pagamentos.length > 0) {
                         const listaFormatada = dados.pagamentos.map((pg, index) => ({
-                            tempId: index,
-                            formaId: pg.formaPagamento ? pg.formaPagamento.id : "",
-                            valor: pg.valor
+                            tempId: index, formaId: pg.formaPagamento ? pg.formaPagamento.id : "", valor: pg.valor
                         }));
                         setPagamentosMultiplos(listaFormatada);
                     }
@@ -193,14 +180,12 @@ function AgendamentoFormPage() {
             if (p.dataFim) { fim = criarDataSegura(p.dataFim); fim.setHours(23, 59, 59, 999); }
             return dataRef >= inicio && (!fim || dataRef <= fim);
         });
-        // Lógica simplificada para encontrar nome na edição legado
         const encontrada = promosValidas[0];
         if (encontrada) setNomePromocaoAtiva(encontrada.descricao);
     };
 
     const recalcularTotal = (procs, dataAgendamento) => {
         let totalBruto = procs.reduce((acc, p) => acc + (p.valor || 0), 0);
-
         if (!dataAgendamento || procs.length === 0) {
             setValorProcedimento(totalBruto); setValorDesconto(0); setPromoAplicada(null); setNomePromocaoAtiva(""); return;
         }
@@ -212,43 +197,27 @@ function AgendamentoFormPage() {
             if (p.dataFim) { fim = criarDataSegura(p.dataFim); fim.setHours(23, 59, 59, 999); }
             return dataRef >= inicio && (!fim || dataRef <= fim);
         });
-
         const promo = promosValidas.find(p => !p.procedimento || procs.some(sel => sel.id === p.procedimento.id));
         let desconto = 0;
         if (promo) {
-            if (promo.tipoDesconto === 'FIXO') {
-                desconto = promo.valorPromocional;
-            } else {
-                desconto = (totalBruto * promo.valorPromocional) / 100;
-            }
-            setPromoAplicada(promo);
-            setNomePromocaoAtiva(promo.descricao);
+            if (promo.tipoDesconto === 'FIXO') { desconto = promo.valorPromocional; }
+            else { desconto = (totalBruto * promo.valorPromocional) / 100; }
+            setPromoAplicada(promo); setNomePromocaoAtiva(promo.descricao);
         } else {
-            setPromoAplicada(null);
-            setNomePromocaoAtiva("");
+            setPromoAplicada(null); setNomePromocaoAtiva("");
         }
         setValorDesconto(desconto);
         setValorProcedimento(Math.max(0, totalBruto - desconto));
     };
 
-    const handleDataChange = (e) => {
-        const novaData = e.target.value;
-        setData(novaData);
-        recalcularTotal(procedimentosSelecionados, novaData);
-    };
+    const handleDataChange = (e) => { const novaData = e.target.value; setData(novaData); recalcularTotal(procedimentosSelecionados, novaData); };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
-        if (procedimentosSelecionados.length === 0) {
-            alert("Selecione pelo menos um procedimento!");
-            return;
-        }
-
+        if (procedimentosSelecionados.length === 0) { alert("Selecione pelo menos um procedimento!"); return; }
         const listaPagamentosParaEnviar = pagamentosMultiplos
             .filter(p => p.valor && p.formaId)
             .map(p => ({ valor: parseFloat(p.valor), formaPagamento: { id: p.formaId } }));
-
         const dadosParaEnviar = {
             data, horaInicial, horaFinal: horaFinal || null, observacoes, status,
             valorProcedimento: valorProcedimento, valorDesconto: valorDesconto, valorParcial: valorParcial ? parseFloat(valorParcial) : 0,
@@ -258,47 +227,63 @@ function AgendamentoFormPage() {
             promocao: promoAplicada ? { id: promoAplicada.id } : null,
             pagamentos: listaPagamentosParaEnviar
         };
-
         const request = id ? api.put(`/agendamentos/${id}`, dadosParaEnviar) : api.post("/agendamentos", dadosParaEnviar);
-
-        request.then(() => {
-            alert("Agendamento salvo!");
-            navigate("/agendamentos");
-        }).catch((err) => {
-            if (err.response && err.response.status === 409) {
-                alert("❌ ERRO: Já existe um agendamento neste horário!");
-            } else {
-                alert("Erro ao salvar agendamento.");
-            }
+        request.then(() => { alert("Agendamento salvo!"); navigate("/agendamentos"); }).catch((err) => {
+            if (err.response && err.response.status === 409) alert("❌ ERRO: Já existe um agendamento neste horário!");
+            else alert("Erro ao salvar agendamento.");
         });
     };
 
-    // --- COMPARTILHAMENTO / IMPRESSÃO ---
+    // --- COMPARTILHAMENTO / IMPRESSÃO INTELIGENTE ---
     const handleShare = async () => {
         const element = componentRef.current;
         setSharing(true);
+
+        // Detecta se é celular (Android/iPhone/iPad)
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
         const opt = {
             margin: 0,
-            filename: `comprovante_${data}.pdf`,
+            filename: `comprovante_${data || 'agenda'}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
+            html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
+
         try {
             const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
             const file = new File([pdfBlob], "comprovante.pdf", { type: "application/pdf" });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({ files: [file], title: 'Comprovante', text: `Olá! Segue o comprovante.` });
+
+            // Lógica Híbrida:
+            // Só usa o compartilhamento nativo se for MOBILE E se o navegador suportar.
+            // No PC, forçamos o download direto.
+            if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'Comprovante',
+                    text: `Olá! Segue o comprovante.`
+                });
             } else {
+                // No PC (ou se falhar o share), baixa o arquivo ou abre em nova aba
                 const url = URL.createObjectURL(pdfBlob);
+
+                // Cria link temporário para forçar download
                 const a = document.createElement('a');
-                a.href = url; a.download = `comprovante_${data}.pdf`; a.click();
+                a.href = url;
+                a.download = `comprovante_${data || 'agenda'}.pdf`;
+                document.body.appendChild(a); // Necessário para Firefox
+                a.click();
+                document.body.removeChild(a); // Limpa
+                URL.revokeObjectURL(url); // Libera memória
             }
-        } catch (error) { console.error(error); alert("Erro ao gerar PDF."); }
-        finally { setSharing(false); }
+        } catch (error) {
+            console.error("Erro ao gerar PDF:", error);
+            alert("Erro ao gerar PDF.");
+        } finally {
+            setSharing(false);
+        }
     };
 
-    // Prepara dados para o componente de impressão
     const getDadosComprovante = () => {
         const clienteNome = listaClientes.find(c => c.id == clienteId)?.nome || "Cliente";
         const nomesProcedimentos = procedimentosSelecionados.map(p => p.nome).join(", ");
@@ -306,17 +291,12 @@ function AgendamentoFormPage() {
         const dataFormatada = data ? data.split('-').reverse().join('/') : "";
         const totalMultiplo = pagamentosMultiplos.reduce((acc, p) => acc + parseFloat(p.valor || 0), 0);
         const totalPago = parseFloat(valorParcial || 0) + totalMultiplo;
-
         return {
             empresaNome: nomeEmpresa, empresaLogo: logo,
             clienteNome, dataFormatada, horaInicial, horaFinal,
-            procedimentoNome: nomesProcedimentos,
-            observacoes,
-            valorTotal: formatMoney(valorProcedimento),
-            valorDesconto: valorDesconto,
-            valorDescontoFormatado: formatMoney(valorDesconto),
-            valorPago: formatMoney(totalPago),
-            valorRestante: formatMoney(valorProcedimento - totalPago)
+            procedimentoNome: nomesProcedimentos, observacoes,
+            valorTotal: formatMoney(valorProcedimento), valorDesconto: valorDesconto, valorDescontoFormatado: formatMoney(valorDesconto),
+            valorPago: formatMoney(totalPago), valorRestante: formatMoney(valorProcedimento - totalPago)
         };
     };
 
@@ -327,15 +307,22 @@ function AgendamentoFormPage() {
 
     return (
         <div className="container mt-4 pb-5">
+            {/* Componente Escondido - Forçamos largura de A4 (aprox 750px) para o PDF ficar cheio */}
             <div style={{ position: "absolute", top: "-9999px", left: "-9999px" }}>
-                <Comprovante ref={componentRef} dados={getDadosComprovante()} />
+                <Comprovante
+                    ref={componentRef}
+                    dados={getDadosComprovante()}
+                    style={{ width: "750px", maxWidth: "none" }}
+                />
             </div>
 
             <div className="card shadow border-0">
-                <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                {/* --- CABEÇALHO DINÂMICO (MUDANÇA VISUAL) --- */}
+                <div className="card-header text-white d-flex justify-content-between align-items-center py-3"
+                    style={{ backgroundColor: primaryColor }}>
                     <h5 className="mb-0 fw-bold">{id ? "Editar" : "Novo"} Agendamento</h5>
                     {id && (
-                        <button type="button" onClick={handleShare} className="btn btn-warning text-dark fw-bold btn-sm rounded-pill shadow-sm" disabled={sharing}>
+                        <button type="button" onClick={handleShare} className="btn btn-light fw-bold btn-sm rounded-pill shadow-sm" style={{ color: primaryColor }} disabled={sharing}>
                             {sharing ? "Gerando..." : "📤 Compartilhar"}
                         </button>
                     )}
@@ -343,7 +330,8 @@ function AgendamentoFormPage() {
 
                 <div className="card-body p-4">
                     <form onSubmit={handleSubmit}>
-
+                        {/* ... (Restante do HTML igual ao anterior) ... */}
+                        {/* Linha 1 */}
                         <div className="row g-3 mb-3">
                             <div className="col-12 col-md-6">
                                 <label className="form-label fw-bold">Cliente *</label>
@@ -358,7 +346,7 @@ function AgendamentoFormPage() {
                             </div>
                         </div>
 
-                        {/* ÁREA DE PROCEDIMENTOS MÚLTIPLOS */}
+                        {/* Procedimentos */}
                         <div className="mb-4 p-3 bg-light rounded border">
                             <label className="form-label fw-bold">Procedimentos</label>
                             <div className="d-flex gap-2 mb-2">
@@ -368,9 +356,8 @@ function AgendamentoFormPage() {
                                         <option key={proc.id} value={proc.id}>{proc.procedimento} (R$ {proc.valor})</option>
                                     ))}
                                 </select>
-                                <button type="button" onClick={adicionarProcedimento} className="btn btn-primary btn-sm px-3 fw-bold">+</button>
+                                <button type="button" onClick={adicionarProcedimento} className="btn btn-sm px-3 fw-bold text-white" style={{ backgroundColor: primaryColor }}>+</button>
                             </div>
-
                             {procedimentosSelecionados.length > 0 ? (
                                 <ul className="list-group mb-2">
                                     {procedimentosSelecionados.map((p, idx) => (
@@ -380,12 +367,10 @@ function AgendamentoFormPage() {
                                         </li>
                                     ))}
                                 </ul>
-                            ) : (
-                                <small className="text-muted fst-italic">Nenhum procedimento adicionado.</small>
-                            )}
+                            ) : (<small className="text-muted fst-italic">Nenhum procedimento adicionado.</small>)}
                         </div>
 
-                        {/* CARD FINANCEIRO */}
+                        {/* Financeiro */}
                         <div className="card mb-4 border-secondary">
                             <div className="card-header bg-light fw-bold d-flex justify-content-between">
                                 <span>Financeiro</span>
@@ -397,63 +382,30 @@ function AgendamentoFormPage() {
                                 <div className="row g-4">
                                     <div className="col-12 col-md-5 border-end-md">
                                         <h6 className="text-success fw-bold mb-3">1. Sinal / Entrada</h6>
-                                        <div className="mb-2">
-                                            <label className="small text-muted">Valor (R$)</label>
-                                            <input type="number" step="0.01" className="form-control border-success" placeholder="0.00" value={valorParcial} onChange={(e) => setValorParcial(e.target.value)} />
-                                        </div>
-                                        <div className="mb-2">
-                                            <label className="small text-muted">Forma de Pagamento</label>
-                                            <select className="form-select form-select-sm" value={formaSinalId} onChange={e => setFormaSinalId(e.target.value)}>
-                                                <option value="">Selecione...</option>
-                                                {listaPagamentos.map(fp => <option key={fp.id} value={fp.id}>{fp.nome}</option>)}
-                                            </select>
-                                        </div>
+                                        <div className="mb-2"><label className="small text-muted">Valor (R$)</label><input type="number" step="0.01" className="form-control border-success" placeholder="0.00" value={valorParcial} onChange={(e) => setValorParcial(e.target.value)} /></div>
+                                        <div className="mb-2"><label className="small text-muted">Forma de Pagamento</label><select className="form-select form-select-sm" value={formaSinalId} onChange={e => setFormaSinalId(e.target.value)}><option value="">Selecione...</option>{listaPagamentos.map(fp => <option key={fp.id} value={fp.id}>{fp.nome}</option>)}</select></div>
                                         {renderTaxaInfo(valorParcial, formaSinalId)}
                                         <hr className="d-md-none" />
                                     </div>
-
                                     <div className="col-12 col-md-7">
                                         <div className="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 className="text-primary fw-bold mb-0">2. Restante</h6>
-                                            <button type="button" onClick={adicionarLinhaPagamento} className="btn btn-sm btn-outline-primary py-0">+ Add</button>
+                                            <h6 className="fw-bold mb-0" style={{ color: primaryColor }}>2. Restante</h6>
+                                            <button type="button" onClick={adicionarLinhaPagamento} className="btn btn-sm btn-outline-primary py-0" style={{ borderColor: primaryColor, color: primaryColor }}>+ Add</button>
                                         </div>
                                         {pagamentosMultiplos.map((pg, index) => (
                                             <div key={pg.tempId} className="border rounded p-2 mb-2 bg-light">
                                                 <div className="row g-2 align-items-center">
-                                                    <div className="col-12 col-sm-6">
-                                                        <select className="form-select form-select-sm" value={pg.formaId} onChange={(e) => atualizarLinhaPagamento(pg.tempId, 'formaId', e.target.value)}>
-                                                            <option value="">Forma...</option>
-                                                            {listaPagamentos.map(fp => <option key={fp.id} value={fp.id}>{fp.nome}</option>)}
-                                                        </select>
-                                                    </div>
-                                                    <div className="col-9 col-sm-4">
-                                                        <div className="input-group input-group-sm">
-                                                            <span className="input-group-text">R$</span>
-                                                            <input type="number" step="0.01" className="form-control" placeholder="0.00" value={pg.valor} onChange={(e) => atualizarLinhaPagamento(pg.tempId, 'valor', e.target.value)} />
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-3 col-sm-2 text-end">
-                                                        <button type="button" onClick={() => removerLinhaPagamento(pg.tempId)} className="btn btn-sm btn-outline-danger w-100">X</button>
-                                                    </div>
+                                                    <div className="col-12 col-sm-6"><select className="form-select form-select-sm" value={pg.formaId} onChange={(e) => atualizarLinhaPagamento(pg.tempId, 'formaId', e.target.value)}><option value="">Forma...</option>{listaPagamentos.map(fp => <option key={fp.id} value={fp.id}>{fp.nome}</option>)}</select></div>
+                                                    <div className="col-9 col-sm-4"><div className="input-group input-group-sm"><span className="input-group-text">R$</span><input type="number" step="0.01" className="form-control" placeholder="0.00" value={pg.valor} onChange={(e) => atualizarLinhaPagamento(pg.tempId, 'valor', e.target.value)} /></div></div>
+                                                    <div className="col-3 col-sm-2 text-end"><button type="button" onClick={() => removerLinhaPagamento(pg.tempId)} className="btn btn-sm btn-outline-danger w-100">X</button></div>
                                                 </div>
                                                 {renderTaxaInfo(pg.valor, pg.formaId)}
                                             </div>
                                         ))}
                                         <div className="mt-3 pt-3 border-top text-end">
-                                            <div className="d-flex justify-content-between align-items-center mb-1">
-                                                <span className="text-muted small">Total Serviços:</span>
-                                                <span className="fw-bold">R$ {valorProcedimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                            </div>
-                                            {valorDesconto > 0 && (
-                                                <div className="d-flex justify-content-between align-items-center text-success small mb-2">
-                                                    <span>Desconto:</span>
-                                                    <span>- R$ {valorDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                                </div>
-                                            )}
-                                            <div className="d-flex justify-content-between align-items-center fs-5">
-                                                <span className={saldoDevedor > 0.01 ? "text-danger fw-bold" : "text-success fw-bold"}>{saldoDevedor > 0.01 ? "Falta:" : "Quitado:"}</span>
-                                                <span className={saldoDevedor > 0.01 ? "text-danger fw-bold" : "text-success fw-bold"}>R$ {Math.abs(saldoDevedor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                            </div>
+                                            <div className="d-flex justify-content-between align-items-center mb-1"><span className="text-muted small">Total Serviços:</span><span className="fw-bold" style={{ color: primaryColor }}>R$ {valorProcedimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                                            {valorDesconto > 0 && (<div className="d-flex justify-content-between align-items-center text-success small mb-2"><span>Desconto:</span><span>- R$ {valorDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>)}
+                                            <div className="d-flex justify-content-between align-items-center fs-5"><span className={saldoDevedor > 0.01 ? "text-danger fw-bold" : "text-success fw-bold"}>{saldoDevedor > 0.01 ? "Falta:" : "Quitado:"}</span><span className={saldoDevedor > 0.01 ? "text-danger fw-bold" : "text-success fw-bold"}>R$ {Math.abs(saldoDevedor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -470,23 +422,13 @@ function AgendamentoFormPage() {
                                     <option value="CANCELADO">Cancelado</option>
                                 </select>
                             </div>
-                            <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold">Início</label>
-                                <input type="time" className="form-control" required value={horaInicial} onChange={(e) => setHoraInicial(e.target.value)} />
-                            </div>
-                            <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold">Fim</label>
-                                <input type="time" className="form-control" value={horaFinal} onChange={(e) => setHoraFinal(e.target.value)} />
-                            </div>
+                            <div className="col-6 col-md-3"><label className="form-label fw-bold">Início</label><input type="time" className="form-control" required value={horaInicial} onChange={(e) => setHoraInicial(e.target.value)} /></div>
+                            <div className="col-6 col-md-3"><label className="form-label fw-bold">Fim</label><input type="time" className="form-control" value={horaFinal} onChange={(e) => setHoraFinal(e.target.value)} /></div>
                         </div>
-
-                        <div className="mb-4">
-                            <label className="form-label fw-bold">Observações</label>
-                            <textarea className="form-control" rows="3" value={observacoes} onChange={(e) => setObservacoes(e.target.value)}></textarea>
-                        </div>
+                        <div className="mb-4"><label className="form-label fw-bold">Observações</label><textarea className="form-control" rows="3" value={observacoes} onChange={(e) => setObservacoes(e.target.value)}></textarea></div>
 
                         <div className="d-grid gap-2">
-                            <button type="submit" className="btn btn-success btn-lg py-3 rounded-pill shadow fw-bold">💾 Salvar Agendamento</button>
+                            <button type="submit" className="btn btn-lg text-white shadow fw-bold" style={{ backgroundColor: primaryColor }}>💾 Salvar Agendamento</button>
                             <button type="button" className="btn btn-outline-secondary rounded-pill" onClick={() => navigate("/agendamentos")}>Cancelar</button>
                         </div>
                     </form>

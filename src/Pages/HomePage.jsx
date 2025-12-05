@@ -1,25 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import api from "../Services/api";
 import Loader from "../Components/Loader/Loader";
+import { ThemeContext } from "../Context/ThemeContext"; // 1. Importe o Contexto
+
+// FullCalendar
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 
 function HomePage() {
-    // Estado de Carregamento Global da Página
-    const [loading, setLoading] = useState(true); // 2. ESTADO INICIAL
+    const { primaryColor } = useContext(ThemeContext); // 2. Pegue a cor
 
-    // LADO ESQUERDO
+    const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState("dashboard");
+
+    // --- ESTADOS DASHBOARD ---
     const [dataFaturamento, setDataFaturamento] = useState("");
     const [listaFaturamento, setListaFaturamento] = useState([]);
     const [totalFaturamento, setTotalFaturamento] = useState(0);
     const [qtdFaturamento, setQtdFaturamento] = useState(0);
 
-    // LADO DIREITO
     const [dataPrevisao, setDataPrevisao] = useState("");
     const [listaPrevisao, setListaPrevisao] = useState([]);
     const [totalPrevisao, setTotalPrevisao] = useState(0);
     const [qtdPrevisao, setQtdPrevisao] = useState(0);
 
-    // Inicializa datas
+    // --- ESTADOS CALENDÁRIO ---
+    const [todosAgendamentos, setTodosAgendamentos] = useState([]);
+
     useEffect(() => {
         const hoje = new Date();
         const ano = hoje.getFullYear();
@@ -31,69 +41,89 @@ function HomePage() {
         setDataPrevisao(hojeFormatado);
     }, []);
 
-    // CARREGAMENTO UNIFICADO (Para controlar o Loader)
     useEffect(() => {
-        if (!dataFaturamento || !dataPrevisao) return;
-
-        // Função para buscar tudo de uma vez
-        const carregarDashboard = async () => {
-            setLoading(true); // Liga o spinner ao mudar a data
+        const carregarDados = async () => {
+            setLoading(true);
             try {
-                // Chama as duas APIs ao mesmo tempo
-                const [resFat, resPrev] = await Promise.all([
-                    api.get(`/agendamentos/filtro?data=${dataFaturamento}`),
-                    api.get(`/agendamentos/filtro?data=${dataPrevisao}`)
-                ]);
+                if (viewMode === 'dashboard') {
+                    if (!dataFaturamento || !dataPrevisao) return;
 
-                // --- LÓGICA ESQUERDA (FATURAMENTO) ---
-                const todosFat = resFat.data;
-                const totalFat = todosFat.reduce((acc, item) => {
-                    if (item.status === 'CONCLUIDO') return acc + (item.valorProcedimento || 0);
-                    else if (item.status === 'CONFIRMADO') return acc + (item.valorParcial || 0);
-                    return acc;
-                }, 0);
-                setTotalFaturamento(totalFat);
-                const listaFiltradaFat = todosFat.filter(item =>
-                    item.status === 'CONCLUIDO' || (item.status === 'CONFIRMADO' && item.valorParcial > 0)
-                );
-                setListaFaturamento(listaFiltradaFat);
-                setQtdFaturamento(listaFiltradaFat.length);
+                    const [resFat, resPrev] = await Promise.all([
+                        api.get(`/agendamentos/filtro?data=${dataFaturamento}`).catch(() => ({ data: [] })),
+                        api.get(`/agendamentos/filtro?data=${dataPrevisao}`).catch(() => ({ data: [] }))
+                    ]);
 
-                // --- LÓGICA DIREITA (PREVISÃO) ---
-                const todosPrev = resPrev.data;
-                const totalPrev = todosPrev.reduce((acc, item) => {
-                    if (item.status === 'PENDENTE' || item.status === 'CONFIRMADO') {
-                        return acc + (item.valorProcedimento || 0);
-                    }
-                    return acc;
-                }, 0);
-                setTotalPrevisao(totalPrev);
-                const listaFiltradaPrev = todosPrev.filter(item =>
-                    item.status === 'CONFIRMADO' || item.status === 'PENDENTE'
-                );
-                setListaPrevisao(listaFiltradaPrev);
-                setQtdPrevisao(listaFiltradaPrev.length);
+                    // Faturamento
+                    const todosFat = resFat.data;
+                    const totalFat = todosFat.reduce((acc, item) => {
+                        if (item.status === 'CONCLUIDO') return acc + (item.valorLiquidoTotal || item.valorProcedimento || 0);
+                        else if (item.status === 'CONFIRMADO') return acc + (item.valorParcial || 0); // Aqui poderíamos usar o líquido do sinal se tivesse no back
+                        return acc;
+                    }, 0);
+                    setTotalFaturamento(totalFat);
+                    const listaFiltradaFat = todosFat.filter(item =>
+                        item.status === 'CONCLUIDO' || (item.status === 'CONFIRMADO' && item.valorParcial > 0)
+                    );
+                    setListaFaturamento(listaFiltradaFat);
+                    setQtdFaturamento(listaFiltradaFat.length);
 
+                    // Previsão
+                    const todosPrev = resPrev.data;
+                    const totalPrev = todosPrev.reduce((acc, item) => {
+                        if (item.status === 'PENDENTE' || item.status === 'CONFIRMADO') {
+                            return acc + (item.valorProcedimento || 0);
+                        }
+                        return acc;
+                    }, 0);
+                    setTotalPrevisao(totalPrev);
+                    const listaFiltradaPrev = todosPrev.filter(item =>
+                        item.status === 'CONFIRMADO' || item.status === 'PENDENTE'
+                    );
+                    setListaPrevisao(listaFiltradaPrev);
+                    setQtdPrevisao(listaFiltradaPrev.length);
+
+                } else {
+                    // Calendário
+                    const res = await api.get("/agendamentos");
+                    setTodosAgendamentos(res.data);
+                }
             } catch (error) {
-                console.error("Erro ao carregar dashboard", error);
+                console.error("Erro ao carregar:", error);
             } finally {
-                // 3. DESLIGA O LOADER (Independente se deu certo ou erro)
                 setLoading(false);
             }
         };
+        carregarDados();
+    }, [viewMode, dataFaturamento, dataPrevisao]);
 
-        carregarDashboard();
+    // Renderizador do Calendário (Bolinhas)
+    const renderDayContent = (arg) => {
+        const cellDateStr = arg.date.toISOString().split('T')[0];
+        const agendamentosDoDia = todosAgendamentos.filter(ag => ag.data === cellDateStr);
 
-    }, [dataFaturamento, dataPrevisao]); // Roda quando qualquer data muda
+        if (agendamentosDoDia.length === 0) {
+            return <div className="fc-daygrid-day-top"><a className="fc-daygrid-day-number text-decoration-none text-dark">{arg.dayNumberText}</a></div>;
+        }
 
-    const getBadgeColor = (status) => {
-        if (status === 'CONCLUIDO') return 'bg-success';
-        if (status === 'CONFIRMADO') return 'bg-primary';
-        return 'bg-warning text-dark';
-    };
+        let countAzul = 0, countVerde = 0, countAmarelo = 0, countVermelho = 0;
+        agendamentosDoDia.forEach(ag => {
+            if (ag.status === 'CONFIRMADO') countAzul++;
+            else if (ag.status === 'CONCLUIDO') countVerde++;
+            else if (ag.status === 'PENDENTE') countAmarelo++;
+            else if (ag.status === 'CANCELADO') countVermelho++;
+        });
 
-    const formatMoney = (valor) => {
-        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        return (
+            <div style={{ textAlign: 'left', padding: '2px' }}>
+                <div className="fc-daygrid-day-top"><a className="fc-daygrid-day-number text-decoration-none fw-bold text-dark">{arg.dayNumberText}</a></div>
+                <div className="dashboard-dots-container">
+                    {countAmarelo > 0 && <div className="dot-row text-dark"><span className="status-dot dot-yellow"></span> +{countAmarelo}</div>}
+                    {countAzul > 0 && <div className="dot-row text-primary"><span className="status-dot dot-blue"></span> +{countAzul}</div>}
+                    {countVerde > 0 && <div className="dot-row text-success"><span className="status-dot dot-green"></span> +{countVerde}</div>}
+                    {countVermelho > 0 && <div className="dot-row text-danger"><span className="status-dot dot-red"></span> +{countVermelho}</div>}
+                </div>
+            </div>
+        );
     };
 
     const calcularRestante = (item) => {
@@ -101,144 +131,170 @@ function HomePage() {
         return resto > 0 ? resto : 0;
     };
 
-    // 4. VERIFICAÇÃO VISUAL: Se estiver carregando, mostra o Spinner e PARA AQUI.
-    if (loading) {
-        return <Loader />;
-    }
+    const formatMoney = (valor) => {
+        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
 
-    // Se não estiver carregando, mostra o HTML normal da página
+    const getBadgeColor = (status) => {
+        if (status === 'CONCLUIDO') return 'bg-success';
+        if (status === 'CONFIRMADO') return 'bg-primary';
+        if (status === 'CANCELADO') return 'bg-danger';
+        return 'bg-warning text-dark';
+    };
+
+    if (loading) return <Loader />;
+
     return (
         <div className="container-fluid mt-4 pb-5">
 
-            <div className="d-flex align-items-center mb-4">
-                <h2 className="mb-0">📊 Dashboard Financeiro</h2>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2 className="mb-0 fw-bold text-secondary">📊 Visão Geral</h2>
+
+                {/* BOTÕES DE TROCA COM COR DINÂMICA */}
+                <div className="btn-group shadow-sm">
+                    <button
+                        className="btn fw-bold"
+                        style={{
+                            backgroundColor: viewMode === 'dashboard' ? primaryColor : 'white',
+                            color: viewMode === 'dashboard' ? 'white' : primaryColor,
+                            borderColor: primaryColor
+                        }}
+                        onClick={() => setViewMode('dashboard')}
+                    >
+                        Hoje
+                    </button>
+                    <button
+                        className="btn fw-bold"
+                        style={{
+                            backgroundColor: viewMode === 'calendar' ? primaryColor : 'white',
+                            color: viewMode === 'calendar' ? 'white' : primaryColor,
+                            borderColor: primaryColor
+                        }}
+                        onClick={() => setViewMode('calendar')}
+                    >
+                        Mês
+                    </button>
+                </div>
             </div>
 
-            <div className="row g-4">
-
-                {/* LADO ESQUERDO */}
-                <div className="col-lg-6">
-                    <div className="card h-100 shadow-sm border-0">
-                        <div className="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0 fw-bold">💰 Faturamento Real</h5>
-                            <input
-                                type="date" className="form-control form-control-sm border-0 text-success fw-bold" style={{ width: "140px" }}
-                                value={dataFaturamento} onChange={(e) => setDataFaturamento(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="card-body d-flex flex-column">
-                            <div className="text-center py-4 bg-light rounded-3 mb-4">
-                                <h1 className="display-4 fw-bold text-success mb-2">
-                                    {formatMoney(totalFaturamento)}
-                                </h1>
-                                <span className="badge bg-secondary rounded-pill px-3 py-2">
-                                    {qtdFaturamento} Baixas realizadas
-                                </span>
+            {/* ================== DASHBOARD ================== */}
+            {viewMode === 'dashboard' && (
+                <div className="row g-4">
+                    {/* LADO ESQUERDO (Mantivemos Verde por semântica financeira "Dinheiro Vivo") */}
+                    <div className="col-lg-6">
+                        <div className="card h-100 shadow border-0">
+                            <div className="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+                                <h5 className="mb-0 fw-bold">💰 Recebido (Caixa)</h5>
+                                <input
+                                    type="date" className="form-control form-control-sm border-0 text-success fw-bold" style={{ width: "140px" }}
+                                    value={dataFaturamento} onChange={(e) => setDataFaturamento(e.target.value)}
+                                />
                             </div>
+                            <div className="card-body p-0">
+                                <div className="text-center py-4 bg-light border-bottom">
+                                    <h1 className="display-4 fw-bold text-success mb-2">{formatMoney(totalFaturamento)}</h1>
+                                    <span className="badge bg-secondary rounded-pill px-3 py-2">{qtdFaturamento} Baixas</span>
+                                </div>
 
-                            <h6 className="text-muted text-uppercase small fw-bold mb-3">Concluídos e Sinais Pagos:</h6>
-
-                            <div className="table-responsive border rounded" style={{ maxHeight: "350px", overflowY: "auto" }}>
-                                <table className="table table-hover mb-0 align-middle">
-                                    <thead className="table-light sticky-top">
-                                        <tr>
-                                            <th>Hora</th>
-                                            <th>Cliente</th>
-                                            <th>Status</th>
-                                            <th className="text-end">Entrada</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {listaFaturamento.map(item => (
-                                            <tr key={item.id}>
-                                                <td className="fw-bold text-muted small">{item.horaInicial}</td>
-                                                <td className="text-truncate" style={{ maxWidth: "100px" }} title={item.clientes?.nome}>
-                                                    {item.clientes?.nome}
-                                                </td>
-                                                <td><span className={`badge ${getBadgeColor(item.status)}`}>{item.status}</span></td>
-                                                <td className="fw-bold text-success text-end">
-                                                    {/* Valor Líquido ou Parcial Líquido (se tiver lógica no back, senao valor bruto) */}
-                                                    {item.status === 'CONCLUIDO'
-                                                        ? formatMoney(item.valorLiquidoTotal || item.valorProcedimento || 0)
-                                                        : <span>{formatMoney(item.valorParcial || 0)} <small className="text-muted">(Sinal)</small></span>
-                                                    }
-                                                </td>
+                                {/* TABELA RESPONSIVA (mobile-table) */}
+                                <div className="table-responsive" style={{ maxHeight: "350px", overflowY: "auto" }}>
+                                    <table className="table table-hover mb-0 align-middle mobile-table">
+                                        <thead className="table-light sticky-top">
+                                            <tr>
+                                                <th className="ps-3">Hora</th><th>Cliente</th><th>Status</th><th className="text-end pe-3">Entrada</th>
                                             </tr>
-                                        ))}
-                                        {listaFaturamento.length === 0 && (
-                                            <tr><td colSpan="4" className="text-center text-muted py-4">Nenhum valor compensado.</td></tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {listaFaturamento.map(item => (
+                                                <tr key={item.id}>
+                                                    <td className="fw-bold text-muted small ps-3" data-label="Hora">{item.horaInicial}</td>
+                                                    <td className="text-truncate" style={{ maxWidth: "150px" }} data-label="Cliente">{item.clientes?.nome}</td>
+                                                    <td data-label="Status"><span className={`badge ${getBadgeColor(item.status)}`}>{item.status}</span></td>
+                                                    <td className="fw-bold text-success text-end pe-3" data-label="Entrada">
+                                                        {item.status === 'CONCLUIDO'
+                                                            ? formatMoney(item.valorLiquidoTotal || item.valorProcedimento || 0)
+                                                            : <span>{formatMoney(item.valorParcial || 0)} <small>(Sinal)</small></span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {listaFaturamento.length === 0 && <tr><td colSpan="4" className="text-center py-4 text-muted">Nenhuma entrada.</td></tr>}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* LADO DIREITO (Cor Dinâmica) */}
+                    <div className="col-lg-6">
+                        <div className="card h-100 shadow border-0">
+                            <div
+                                className="card-header text-white py-3 d-flex justify-content-between align-items-center"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                <h5 className="mb-0 fw-bold">📈 A Receber (Previsão)</h5>
+                                <input
+                                    type="date" className="form-control form-control-sm border-0 fw-bold"
+                                    style={{ width: "140px", color: primaryColor }}
+                                    value={dataPrevisao} onChange={(e) => setDataPrevisao(e.target.value)}
+                                />
+                            </div>
+                            <div className="card-body p-0">
+                                <div className="text-center py-4 bg-light border-bottom">
+                                    <h1 className="display-4 fw-bold mb-2" style={{ color: primaryColor }}>{formatMoney(totalPrevisao)}</h1>
+                                    <span className="badge bg-secondary rounded-pill px-3 py-2">{qtdPrevisao} Previstos</span>
+                                </div>
+
+                                {/* TABELA RESPONSIVA (mobile-table) */}
+                                <div className="table-responsive" style={{ maxHeight: "350px", overflowY: "auto" }}>
+                                    <table className="table table-hover mb-0 align-middle mobile-table">
+                                        <thead className="table-light sticky-top">
+                                            <tr>
+                                                <th className="ps-3">Hora</th><th>Cliente</th><th>Status</th><th className="text-end">Restante</th><th className="text-center pe-3">Ação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {listaPrevisao.map(item => (
+                                                <tr key={item.id}>
+                                                    <td className="fw-bold text-muted small ps-3" data-label="Hora">{item.horaInicial}</td>
+                                                    <td className="text-truncate" style={{ maxWidth: "150px" }} data-label="Cliente">{item.clientes?.nome}</td>
+                                                    <td data-label="Status"><span className={`badge ${getBadgeColor(item.status)}`}>{item.status}</span></td>
+                                                    <td className="text-end fw-bold" style={{ color: primaryColor }} data-label="Restante">
+                                                        {formatMoney(calcularRestante(item))}
+                                                    </td>
+                                                    <td className="text-center pe-3" data-label="Ação">
+                                                        <Link to={`/agendamentos/editar/${item.id}`} className="btn btn-sm btn-outline-primary py-0">✏️</Link>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {listaPrevisao.length === 0 && <tr><td colSpan="5" className="text-center py-4 text-muted">Agenda livre.</td></tr>}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            )}
 
-                {/* LADO DIREITO */}
-                <div className="col-lg-6">
-                    <div className="card h-100 shadow-sm border-0">
-                        <div className="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0 fw-bold">📈 A Receber (Previsão)</h5>
-                            <input
-                                type="date" className="form-control form-control-sm border-0 text-primary fw-bold" style={{ width: "140px" }}
-                                value={dataPrevisao} onChange={(e) => setDataPrevisao(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="card-body d-flex flex-column">
-                            <div className="text-center py-4 bg-light rounded-3 mb-4">
-                                <h1 className="display-4 fw-bold text-primary mb-2">
-                                    {formatMoney(totalPrevisao)}
-                                </h1>
-                                <span className="badge bg-secondary rounded-pill px-3 py-2">
-                                    {qtdPrevisao} Pendentes de Pagamento Total
-                                </span>
-                            </div>
-
-                            <h6 className="text-muted text-uppercase small fw-bold mb-3">Agenda Aberta (Saldo Devedor):</h6>
-
-                            <div className="table-responsive border rounded" style={{ maxHeight: "350px", overflowY: "auto" }}>
-                                <table className="table table-hover mb-0 align-middle">
-                                    <thead className="table-light sticky-top">
-                                        <tr>
-                                            <th>Hora</th>
-                                            <th>Cliente</th>
-                                            <th>Status</th>
-                                            <th className="text-end">Restante</th>
-                                            <th className="text-center">Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {listaPrevisao.map(item => (
-                                            <tr key={item.id}>
-                                                <td className="fw-bold text-muted small">{item.horaInicial}</td>
-                                                <td className="text-truncate" style={{ maxWidth: "100px" }} title={item.clientes?.nome}>
-                                                    {item.clientes?.nome}
-                                                </td>
-                                                <td><span className={`badge ${getBadgeColor(item.status)}`}>{item.status}</span></td>
-                                                <td className="text-end fw-bold text-primary">
-                                                    {formatMoney(calcularRestante(item))}
-                                                </td>
-                                                <td className="text-center">
-                                                    <Link to={`/agendamentos/editar/${item.id}`} className="btn btn-sm btn-outline-primary py-0">
-                                                        ✏️
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {listaPrevisao.length === 0 && (
-                                            <tr><td colSpan="5" className="text-center text-muted py-4">Agenda limpa ou tudo quitado! 🎉</td></tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+            {/* ================== CALENDÁRIO ================== */}
+            {viewMode === 'calendar' && (
+                <div className="card shadow border-0">
+                    <div className="card-body">
+                        <FullCalendar
+                            plugins={[dayGridPlugin, interactionPlugin]}
+                            initialView="dayGridMonth"
+                            locale={ptBrLocale}
+                            headerToolbar={{ left: 'prev,next today', center: 'title', right: '' }}
+                            events={todosAgendamentos}
+                            dayCellContent={renderDayContent}
+                            height="auto"
+                        />
                     </div>
                 </div>
+            )}
 
-            </div>
         </div>
     );
 }

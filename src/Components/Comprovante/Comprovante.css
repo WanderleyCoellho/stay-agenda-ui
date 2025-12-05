@@ -1,145 +1,223 @@
-/* Estilo Base */
+/* --- CONFIGURAÇÃO GERAL (Responsiva) --- */
 .comprovante-container {
     width: 100%;
-    max-width: 350px;
-    padding: 15px;
-    font-family: 'Courier New', Courier, monospace;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 25px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #fff;
-    color: #000;
-    border: 1px solid #ddd;
+    color: #1a1a1a;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-sizing: border-box;
 }
 
-/* --- CABEÇALHO (Mantido Centralizado) --- */
+/* --- CABEÇALHO --- */
 .header {
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
+
 .logo-img {
-    height: 50px;
+    height: 70px;
     object-fit: contain;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     display: block;
     margin-left: auto;
     margin-right: auto;
 }
-.logo-area { font-size: 2rem; margin-bottom: 5px; text-align: center; }
 
-.header h2 { 
-    margin: 5px 0; 
-    font-size: 1.1rem; 
-    text-transform: uppercase; 
-    font-weight: 800;
-}
-.header p { 
-    margin: 0; 
-    font-size: 0.8rem; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
-    border-bottom: 1px solid #000;
-    padding-bottom: 10px;
-}
-
-/* --- CONTEÚDO (ALTERADO PARA ESQUERDA) --- */
-.section {
-    display: flex;
-    justify-content: flex-start; /* <--- MUDOU: Alinha tudo à esquerda */
-    align-items: baseline;       /* Alinha o texto na mesma base */
+.logo-icon {
+    font-size: 3rem;
+    display: block;
     margin-bottom: 5px;
-    font-size: 0.9rem;
-    line-height: 1.2;
-}
-.section label { 
-    font-weight: bold; 
-    margin-right: 5px; /* Espaço pequeno entre o rótulo e o valor */
-    white-space: nowrap; /* Impede que o rótulo quebre linha */
-}
-.section span { 
-    text-align: left; /* <--- MUDOU: Texto do valor à esquerda */
-    max-width: 100%; 
 }
 
-.section.obs { 
-    display: block; 
-    font-style: italic; 
-    color: #333; 
-    margin-top: 8px; 
-    border: 1px dashed #999;
-    padding: 5px;
-    font-size: 0.8rem;
-    text-align: left; /* Garante alinhamento à esquerda */
+.header h2 {
+    margin: 5px 0;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #000;
+    letter-spacing: 0.5px;
 }
 
-.divider {
-    border-top: 1px dashed #000;
-    margin: 10px 0;
+.header p {
+    margin: 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #666;
+    letter-spacing: 2px;
 }
 
-/* --- CAIXA FINANCEIRA (MANTIDO: ESQUERDA/DIREITA) --- */
-.financial-box {
-    margin-top: 10px;
-    padding: 8px;
-    border: 1px solid #000;
-    border-radius: 4px;
-    background-color: #fdfdfd; 
+/* --- DIVISORES --- */
+.divider-solid {
+    border: 0;
+    border-top: 2px solid #000;
+    margin: 20px 0;
 }
 
-.financial-box .row {
+.dashed-line {
+    border: 0;
+    border-top: 1px dashed #bbb;
+    margin: 15px 0;
+    width: 100%;
+}
+
+/* --- CORPO (Layout Flexível) --- */
+.body-row {
     display: flex;
-    justify-content: space-between; /* Mantém valores nas extremidades */
-    margin-bottom: 3px;
-    font-size: 0.9rem;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.financial-box .total {
-    font-weight: 900;
+/* GRUPO DE INFORMAÇÕES (Esquerda) */
+.info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-line {
+    display: flex;
+    /* MUDANÇA AQUI: Alinha tudo à esquerda */
+    justify-content: flex-start;
+    align-items: baseline;
     font-size: 1rem;
-    margin-top: 5px;
-    border-top: 1px solid #000;
-    padding-top: 5px;
+    border-bottom: 1px solid #f5f5f5;
+    padding-bottom: 4px;
+}
+
+.info-line .label {
+    font-weight: 700;
+    color: #444;
+    white-space: nowrap;
+    margin-right: 8px;
+    /* Espaço pequeno entre rótulo e valor */
+    min-width: 80px;
+    /* Opcional: Alinha os valores verticalmente */
+}
+
+.info-line .value {
+    text-align: left;
+    /* Valor alinhado à esquerda */
+    color: #000;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+/* Estilo para Observação (Bloco) */
+.info-line.obs-block {
+    display: block;
+    /* Quebra linha */
+    border: none;
+    margin-top: 10px;
+}
+
+.info-line.obs-block .label {
+    display: block;
+    margin-bottom: 5px;
+    color: #000;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.info-line.obs-block .value {
+    display: block;
+    text-align: left;
+    font-style: italic;
+    color: #555;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #ccc;
+}
+
+/* --- FINANCEIRO (Direita) --- */
+.finance-col {
+    margin-top: 10px;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.finance-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 1rem;
+}
+
+.f-label {
+    color: #555;
+}
+
+.f-value {
+    font-weight: 600;
+}
+
+.finance-item.discount .f-value {
+    color: #dc3545;
+}
+
+.total-block {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 2px solid #000;
+    font-size: 1.2rem;
+}
+
+.big-total {
+    color: #198754;
+    font-weight: 800;
 }
 
 /* --- RODAPÉ --- */
 .footer {
     text-align: center;
-    margin-top: 15px;
-    font-size: 0.7rem;
-    color: #555;
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px dashed #ccc;
+    font-size: 0.75rem;
+    color: #999;
 }
 
-/* =========================================
-   REGRAS DE IMPRESSÃO
-   ========================================= */
+/* --- IMPRESSÃO --- */
 @media print {
     @page {
-        size: auto; 
-        margin: 10mm;
+        size: auto;
+        margin: 0mm;
+    }
+
+    body {
+        background-color: #fff;
+        margin: 0.5cm;
     }
 
     body * {
         visibility: hidden;
     }
-    
-    .comprovante-container, .comprovante-container * {
+
+    .comprovante-container,
+    .comprovante-container * {
         visibility: visible;
     }
 
     .comprovante-container {
         position: absolute;
         left: 0;
-        right: 0;
-        top: 20px;
-        margin: auto;
-        
-        width: 350px;
+        top: 0;
+        width: 100%;
         max-width: 100%;
-        
-        border: 1px solid #000;
-        padding: 15px;
+        margin: 0;
+        border: none;
         box-shadow: none;
+        padding: 10px;
     }
 
-    .financial-box {
-        border: 1px solid #000;
+    .finance-col,
+    .obs-block .value {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }

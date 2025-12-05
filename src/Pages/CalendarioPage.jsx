@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react"; // 1. Adicione useContext
 import { useNavigate } from "react-router-dom";
 import api from "../Services/api";
+import { ThemeContext } from "../Context/ThemeContext"; // 2. Importe o Contexto
 
 // FullCalendar e Plugins
 import FullCalendar from '@fullcalendar/react';
@@ -8,10 +9,11 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
-
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 
 function CalendarioPage() {
+    const { primaryColor } = useContext(ThemeContext); // 3. Pegue a cor do tema
+
     const [eventos, setEventos] = useState([]);
     const navigate = useNavigate();
 
@@ -23,9 +25,10 @@ function CalendarioPage() {
         api.get("/agendamentos")
             .then((res) => {
                 const dadosFormatados = res.data.map(ag => {
-                    let corFundo = '#3788d8';
-                    let corBorda = '#3788d8';
+                    let corFundo = primaryColor; // Usa a cor do tema como padrão
+                    let corBorda = primaryColor;
 
+                    // Cores específicas por status (pode manter fixas ou derivar)
                     switch (ag.status) {
                         case 'PENDENTE': corFundo = '#ffc107'; corBorda = '#e0a800'; break;
                         case 'CONFIRMADO': corFundo = '#0d6efd'; corBorda = '#0a58ca'; break;
@@ -48,7 +51,7 @@ function CalendarioPage() {
                             procedimento: ag.procedimento?.procedimento || ag.procedimentos?.procedimento,
                             cliente: ag.clientes?.nome,
                             status: ag.status,
-                            dataOriginal: ag.data // Data pura YYYY-MM-DD para contagem
+                            dataOriginal: ag.data
                         }
                     };
                 });
@@ -65,20 +68,19 @@ function CalendarioPage() {
         navigate("/agendamentos/novo");
     };
 
-    // --- RENDERIZADOR MÊS (Resumo com Bolinhas) ---
+    // --- RENDERIZADOR MÊS ---
     const renderMonthCell = (arg) => {
         const cellDateStr = arg.date.toISOString().split('T')[0];
-
         const eventosDoDia = eventos.filter(ev => ev.extendedProps.dataOriginal === cellDateStr);
 
         if (eventosDoDia.length === 0) {
             return <div className="fc-daygrid-day-top"><a className="fc-daygrid-day-number" style={{ textDecoration: 'none', color: 'inherit' }}>{arg.dayNumberText}</a></div>;
         }
 
-        let countAzul = 0; // Confirmado
-        let countVerde = 0; // Concluido
-        let countAmarelo = 0; // Pendente
-        let countVermelho = 0; // Cancelado
+        let countAzul = 0;
+        let countVerde = 0;
+        let countAmarelo = 0;
+        let countVermelho = 0;
 
         eventosDoDia.forEach(ev => {
             const s = ev.extendedProps.status;
@@ -106,7 +108,7 @@ function CalendarioPage() {
         );
     };
 
-    // --- RENDERIZADOR DIA/SEMANA (Detalhado) ---
+    // --- RENDERIZADOR DIA/SEMANA ---
     const renderGeneralContent = (eventInfo) => {
         return (
             <div style={{ overflow: 'hidden', fontSize: '0.85em', padding: '2px', lineHeight: '1.2' }}>
@@ -124,8 +126,13 @@ function CalendarioPage() {
     return (
         <div className="container mt-4 mb-5">
             <div className="card shadow border-0">
-                <div className="card-header bg-white border-bottom py-3">
-                    <h4 className="mb-0 fw-bold text-primary">📅 Agenda</h4>
+
+                {/* --- CABEÇALHO DINÂMICO --- */}
+                <div
+                    className="card-header text-white border-bottom py-3"
+                    style={{ backgroundColor: primaryColor }} // Aplica a cor aqui
+                >
+                    <h4 className="mb-0 fw-bold">📅 Agenda</h4>
                 </div>
 
                 <div className="card-body p-0">
@@ -136,11 +143,10 @@ function CalendarioPage() {
 
                             initialView="dayGridMonth"
 
-                            // --- CONFIGURAÇÃO DA BARRA (Sem o botão 'today') ---
                             headerToolbar={{
-                                left: 'prev,next', // Apenas setas de navegação
+                                left: 'prev,next',
                                 center: 'title',
-                                right: 'dayGridMonth,timeGridDay,listWeek' // Botões de visualização
+                                right: 'dayGridMonth,timeGridDay,listWeek'
                             }}
 
                             views={{
@@ -152,7 +158,6 @@ function CalendarioPage() {
                                     eventContent: renderGeneralContent
                                 },
                                 listWeek: {
-                                    // Padrão lista
                                 }
                             }}
 

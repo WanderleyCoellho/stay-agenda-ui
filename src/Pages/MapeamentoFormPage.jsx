@@ -11,12 +11,10 @@ function MapeamentoFormPage() {
   const [descricao, setDescricao] = useState("");
   const [arquivo, setArquivo] = useState(null);
 
-  // Dados do agendamento para exibir na tela
   const [agendamento, setAgendamento] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Busca o agendamento para saber quem é o cliente e qual o procedimento
     api.get(`/agendamentos/${agendamentoId}`)
       .then(res => {
         setAgendamento(res.data);
@@ -29,20 +27,23 @@ function MapeamentoFormPage() {
       });
   }, [agendamentoId, navigate]);
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setArquivo(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!arquivo) return alert("Por favor, tire uma foto ou selecione um arquivo!");
+    if (!arquivo) return alert("Por favor, selecione uma mídia!");
 
     const formData = new FormData();
     formData.append("arquivo", arquivo);
     formData.append("descricao", descricao);
-
-    // Envia os IDs necessários para o vínculo
     formData.append("agendamentoId", agendamentoId);
+
     if (agendamento.clientes) formData.append("clienteId", agendamento.clientes.id);
     if (agendamento.procedimentos) {
-      // Se for lista (novo), pega o primeiro, ou ajusta conforme sua regra de negócio
-      // Aqui estou assumindo o primeiro para simplificar o vínculo principal
       const procId = Array.isArray(agendamento.procedimentos)
         ? agendamento.procedimentos[0].id
         : agendamento.procedimentos.id;
@@ -54,7 +55,6 @@ function MapeamentoFormPage() {
         headers: { "Content-Type": "multipart/form-data" }
       });
       alert("Mídia salva com sucesso!");
-      // Redireciona para o histórico do cliente
       if (agendamento.clientes) {
         navigate(`/clientes/historico/${agendamento.clientes.id}`);
       } else {
@@ -69,43 +69,79 @@ function MapeamentoFormPage() {
   if (loading) return <div className="container mt-5 text-center">Carregando...</div>;
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-4">
       <div className="card shadow border-0">
-        <div className="card-header bg-warning text-dark">
+        <div className="card-header bg-warning text-dark py-3">
           <h4 className="mb-0 fw-bold">📷 Anexar Mídia</h4>
         </div>
         <div className="card-body p-4">
 
-          <div className="alert alert-light border mb-4">
+          <div className="alert alert-light border mb-4 shadow-sm">
             <strong>Cliente:</strong> {agendamento.clientes?.nome} <br />
             <strong>Data:</strong> {agendamento.data ? agendamento.data.split('-').reverse().join('/') : ''}
           </div>
 
           <form onSubmit={handleSubmit}>
 
-            {/* CAMPO DE CÂMERA / ARQUIVO */}
-            <div className="mb-4 text-center">
-              <label className="form-label fw-bold d-block mb-2">Capturar Foto/Vídeo</label>
+            <label className="form-label fw-bold mb-3">Selecione a origem:</label>
 
-              <input
-                type="file"
-                className="form-control form-control-lg"
-                id="cameraInput"
+            {/* --- BOTÕES DE SELEÇÃO (Android Fix) --- */}
+            <div className="row g-2 mb-3">
 
-                // --- AQUI ESTÁ A MÁGICA PARA O MOBILE ---
-                accept="image/*,video/*"
-                capture="environment" // Tenta abrir a câmera traseira direto
-                // ----------------------------------------
+              {/* OPÇÃO 1: CÂMERA (FOTO) */}
+              <div className="col-4">
+                <input
+                  type="file" id="camFoto" hidden
+                  accept="image/*" capture="environment"
+                  onChange={handleFileChange}
+                />
+                <label htmlFor="camFoto" className="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3 border-2">
+                  <span className="fs-1">📸</span>
+                  <span className="small fw-bold mt-1">Foto</span>
+                </label>
+              </div>
 
-                required
-                onChange={e => setArquivo(e.target.files[0])}
-              />
-              <div className="form-text mt-2">
-                No celular, isso abrirá a câmera. No PC, abrirá seus arquivos.
+              {/* OPÇÃO 2: FILMADORA (VÍDEO) */}
+              <div className="col-4">
+                <input
+                  type="file" id="camVideo" hidden
+                  accept="video/*" capture="environment"
+                  onChange={handleFileChange}
+                />
+                <label htmlFor="camVideo" className="btn btn-outline-danger w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3 border-2">
+                  <span className="fs-1">🎥</span>
+                  <span className="small fw-bold mt-1">Vídeo</span>
+                </label>
+              </div>
+
+              {/* OPÇÃO 3: GALERIA */}
+              <div className="col-4">
+                <input
+                  type="file" id="galeria" hidden
+                  accept="image/*,video/*"
+                  onChange={handleFileChange}
+                />
+                <label htmlFor="galeria" className="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3 border-2">
+                  <span className="fs-1">📁</span>
+                  <span className="small fw-bold mt-1">Galeria</span>
+                </label>
               </div>
             </div>
 
-            <div className="mb-3">
+            {/* --- PREVIEW DO ARQUIVO SELECIONADO --- */}
+            {arquivo ? (
+              <div className="alert alert-success d-flex align-items-center animate__animated animate__fadeIn">
+                <i className="bi bi-check-circle-fill me-2 fs-4"></i>
+                <div className="text-truncate">
+                  <strong>Arquivo pronto:</strong><br />
+                  {arquivo.name}
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted small text-center mb-4">Nenhum arquivo selecionado.</p>
+            )}
+
+            <div className="mb-4">
               <label className="form-label fw-bold">Descrição / Observação</label>
               <textarea
                 className="form-control"
@@ -117,10 +153,10 @@ function MapeamentoFormPage() {
             </div>
 
             <div className="d-grid gap-2">
-              <button type="submit" className="btn btn-success btn-lg shadow-sm fw-bold">
+              <button type="submit" className="btn btn-success btn-lg shadow fw-bold" disabled={!arquivo}>
                 Salvar Mídia
               </button>
-              <button type="button" className="btn btn-outline-secondary" onClick={() => navigate("/agendamentos")}>
+              <button type="button" className="btn btn-outline-secondary rounded-pill" onClick={() => navigate("/agendamentos")}>
                 Cancelar
               </button>
             </div>

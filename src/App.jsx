@@ -47,6 +47,9 @@ import ConfiguracoesPage from "./Pages/ConfiguracoesPage";
 // Calendário
 import CalendarioPage from "./Pages/CalendarioPage";
 
+// Despesas
+import DespesasPage from "./Pages/DespesasPage";
+
 
 function App() {
   return (
@@ -103,6 +106,9 @@ function App() {
 
             {/* Mapeamentos */}
             <Route path="/mapeamentos/novo/:agendamentoId" element={<PrivateRoute><MapeamentoFormPage /></PrivateRoute>} />
+
+            {/* Despesas */}
+            <Route path="/despesas" element={<PrivateRoute><DespesasPage /></PrivateRoute>} />
 
           </Routes>
 
